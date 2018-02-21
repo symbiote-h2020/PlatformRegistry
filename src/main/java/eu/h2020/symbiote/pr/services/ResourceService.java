@@ -4,10 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.cloud.model.internal.FederatedCloudResource;
 import eu.h2020.symbiote.model.cim.Resource;
+import eu.h2020.symbiote.pr.model.NewResourcesMessage;
 import eu.h2020.symbiote.pr.model.PersistentVariable;
+import eu.h2020.symbiote.pr.model.ResourcesDeletedMessage;
 import eu.h2020.symbiote.pr.repositories.PersistentVariableRepository;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import io.jsonwebtoken.lang.Assert;
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +50,14 @@ public class ResourceService {
         this.platformId = platformId;
     }
 
+    /**
+     * Stores the federated resources offered by the platform
+     * @param federatedCloudResources registration message sent by Registration Handler
+     * @return response to Registration Handler containing the federationIds of the resources
+     */
     public Map<String, Map<String, String>> savePlatformResources(List<FederatedCloudResource> federatedCloudResources) {
+        log.trace("savePlatformResources: " + ReflectionToStringBuilder.toString(federatedCloudResources));
+
         List<Resource> resourcesToSave = new LinkedList<>();
         Map<String, Map<String, String>> internalIdResourceIdMap = new HashMap<>();
 
@@ -78,7 +88,24 @@ public class ResourceService {
         resourceRepository.save(resourcesToSave);
         idSequence.setValue(id);
         persistentVariableRepository.save(idSequence);
+
+        // Todo: inform Subscription Manager for the new Resources
         return internalIdResourceIdMap;
+    }
+
+
+    public void saveFederationResources(NewResourcesMessage newFederatedResources) {
+        log.trace("saveFederationResources: " + ReflectionToStringBuilder.toString(newFederatedResources));
+
+        if (newFederatedResources.getNewResources() != null)
+            resourceRepository.save(newFederatedResources.getNewResources());
+    }
+
+    public void removeFederationResources(ResourcesDeletedMessage resourcesDeleted) {
+        log.trace("removeFederationResources: " + ReflectionToStringBuilder.toString(resourcesDeleted));
+
+        if (resourcesDeleted.getDeletedIds() != null)
+            resourceRepository.deleteAllByIdIn(resourcesDeleted.getDeletedIds());
     }
 
     private String serializeResource(Resource resource) {
