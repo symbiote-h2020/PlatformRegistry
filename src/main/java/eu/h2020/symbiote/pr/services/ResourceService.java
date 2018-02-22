@@ -63,6 +63,11 @@ public class ResourceService {
 
         long id = (Long) idSequence.getValue();
         for (FederatedCloudResource federatedCloudResource : federatedCloudResources) {
+            // Here, we do a trick. Instead of cloning the federatedCloudResource, we just serialize it and deserialize it.
+            // So, every time we deserialize a new object (cloned) is created. We did that to avoid the cumbersome
+            // implementation of the clone() in every Resource and Resource field (e.g. StationarySensor, MobileSensor,
+            // Location, ...)
+
             String serializedResource = serializeResource(federatedCloudResource.getResource());
             Map<String, String> federationResourceIdMap = new HashMap<>();
 
@@ -93,9 +98,20 @@ public class ResourceService {
         return internalIdResourceIdMap;
     }
 
+    public void removePlatformResources(List<String> resourceIds) {
+        log.trace("removeResources: " + ReflectionToStringBuilder.toString(resourceIds));
+
+        // Todo: maybe check if these are platform resources
+        if (resourceIds != null)
+            resourceRepository.deleteAllByIdIn(resourceIds);
+    }
 
     public void saveFederationResources(NewResourcesMessage newFederatedResources) {
         log.trace("saveFederationResources: " + ReflectionToStringBuilder.toString(newFederatedResources));
+
+        // Todo: maybe remove the platform resources from the message.
+        // Platform resources should not be present here. Only, federated resources offered by other platforms should be
+        // in the NewResourceMessage
 
         if (newFederatedResources.getNewResources() != null)
             resourceRepository.save(newFederatedResources.getNewResources());
@@ -103,6 +119,10 @@ public class ResourceService {
 
     public void removeFederationResources(ResourcesDeletedMessage resourcesDeleted) {
         log.trace("removeFederationResources: " + ReflectionToStringBuilder.toString(resourcesDeleted));
+
+        // Todo: maybe remove the platform resources from the message.
+        // Platform resources should not be present here. Only, federated resources offered by other platforms should be
+        // in the ResourcesDeletedMessage
 
         if (resourcesDeleted.getDeletedIds() != null)
             resourceRepository.deleteAllByIdIn(resourcesDeleted.getDeletedIds());

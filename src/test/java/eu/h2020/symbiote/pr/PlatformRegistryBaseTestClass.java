@@ -6,6 +6,7 @@ import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.cim.Service;
 import eu.h2020.symbiote.model.cim.StationarySensor;
 import eu.h2020.symbiote.pr.model.NewResourcesMessage;
+import eu.h2020.symbiote.pr.model.PersistentVariable;
 import eu.h2020.symbiote.pr.repositories.PersistentVariableRepository;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import org.junit.After;
@@ -36,6 +37,9 @@ public abstract class PlatformRegistryBaseTestClass {
     @Autowired
     protected RabbitTemplate rabbitTemplate;
 
+    @Autowired
+    public PersistentVariable idSequence;
+
     @Value("${platformId}")
     private String platformId;
 
@@ -44,6 +48,9 @@ public abstract class PlatformRegistryBaseTestClass {
 
     @Value("${rabbit.routingKey.platformRegistry.rhRegistrationRequest}")
     protected String rhRegistrationRequestKey;
+
+    @Value("${rabbit.routingKey.platformRegistry.rhRemovalRequest}")
+    protected String rhRemovalRequestKey;
 
     @Value("${rabbit.routingKey.platformRegistry.smStoreResources}")
     protected String smStoreResourcesKey;

@@ -44,8 +44,27 @@ public class RegistrationHandlerListener {
             key = "${rabbit.routingKey.platformRegistry.rhRegistrationRequest}")
     )
     public Map<String, Map<String,String>> registerResources(List<FederatedCloudResource> federatedCloudResources) {
-        log.trace("Received resource registration request From registration Handler: " +
+        log.trace("Received resource registration request from registration Handler: " +
                 ReflectionToStringBuilder.toString(federatedCloudResources));
         return resourceService.savePlatformResources(federatedCloudResources);
+    }
+
+    /**
+     * Spring AMQP Listener for Resource Removal requests from Registration Handler.
+     *
+     * @param resourceIds Contains a list of resource federationIds to be deleted
+     */
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(value = "${rabbit.queueName.platformRegistry.rhRemovalRequest}", durable = "${rabbit.exchange.platformRegistry.durable}",
+                    autoDelete = "${rabbit.exchange.platformRegistry.autodelete}", exclusive = "false"),
+            exchange = @Exchange(value = "${rabbit.exchange.platformRegistry.name}", ignoreDeclarationExceptions = "true",
+                    durable = "${rabbit.exchange.platformRegistry.durable}", autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
+                    internal = "${rabbit.exchange.platformRegistry.internal}", type = "${rabbit.exchange.platformRegistry.type}"),
+            key = "${rabbit.routingKey.platformRegistry.rhRemovalRequest}")
+    )
+    public void removeResources(List<String> resourceIds) {
+        log.trace("Received resource removal request from registration Handler: " +
+                ReflectionToStringBuilder.toString(resourceIds));
+        resourceService.removePlatformResources(resourceIds);
     }
 }
