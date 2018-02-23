@@ -41,7 +41,7 @@ public class ResourceService {
     public ResourceService(ResourceRepository resourceRepository,
                            PersistentVariableRepository persistentVariableRepository,
                            PersistentVariable idSequence,
-                           @Value("${platformId}") String platformId) {
+                           @Value("${platform.id}") String platformId) {
         this.resourceRepository = resourceRepository;
         this.persistentVariableRepository = persistentVariableRepository;
         this.idSequence = idSequence;

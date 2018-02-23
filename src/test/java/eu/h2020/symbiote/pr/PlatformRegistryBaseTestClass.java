@@ -9,14 +9,21 @@ import eu.h2020.symbiote.pr.model.NewResourcesMessage;
 import eu.h2020.symbiote.pr.model.PersistentVariable;
 import eu.h2020.symbiote.pr.repositories.PersistentVariableRepository;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
+import eu.h2020.symbiote.pr.services.AuthorizationService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
+import org.mockito.MockitoAnnotations;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.util.*;
 
@@ -25,8 +32,17 @@ import java.util.*;
  * @since 2/20/2018.
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest()
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@ActiveProfiles("test")
 public abstract class PlatformRegistryBaseTestClass {
+
+    @Autowired
+    protected WebApplicationContext wac;
+
+    protected MockMvc mockMvc;
+
+    @Autowired
+    protected AuthorizationService authorizationService;
 
     @Autowired
     protected ResourceRepository resourceRepository;
@@ -40,7 +56,7 @@ public abstract class PlatformRegistryBaseTestClass {
     @Autowired
     public PersistentVariable idSequence;
 
-    @Value("${platformId}")
+    @Value("${platform.id}")
     private String platformId;
 
     @Value("${rabbit.exchange.platformRegistry.name}")
@@ -62,6 +78,8 @@ public abstract class PlatformRegistryBaseTestClass {
     public void setup() {
         resourceRepository.deleteAll();
         persistentVariableRepository.deleteAll();
+
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
     }
 
     @After
@@ -117,6 +135,15 @@ public abstract class PlatformRegistryBaseTestClass {
     }
 
     public NewResourcesMessage createSMNewResourcesMessage() {
+        return new NewResourcesMessage(createTestResources());
+    }
+
+    public void saveResourceToRepo() {
+        resourceRepository.save(createTestResources());
+    }
+
+    public List<Resource> createTestResources() {
+        List<Resource> resources = new ArrayList<>();
 
         // Create 1st resource
         StationarySensor stationarySensor = new StationarySensor();
@@ -125,23 +152,20 @@ public abstract class PlatformRegistryBaseTestClass {
         stationarySensor.setDescription(Collections.singletonList("sensor1Description"));
         stationarySensor.setInterworkingServiceURL("https://sensor1.com");
         stationarySensor.setObservesProperty(Arrays.asList("property1", "property2"));
+        resources.add(stationarySensor);
 
         // Create 2nd resource
         MobileSensor mobileSensor = new MobileSensor();
         mobileSensor.setId(createNewResourceId(1, "platform1"));
         mobileSensor.setName("mobileSensor");
+        resources.add(mobileSensor);
 
         // Create 3rd resource
         Service service = new Service();
         service.setId(createNewResourceId(2, "platform1"));
         service.setName("service");
-
-        // Create a registration request for a federatedCloudResource
-        List<Resource> resources = new ArrayList<>();
-        resources.add(stationarySensor);
-        resources.add(mobileSensor);
         resources.add(service);
 
-        return new NewResourcesMessage(resources);
+        return resources;
     }
 }
