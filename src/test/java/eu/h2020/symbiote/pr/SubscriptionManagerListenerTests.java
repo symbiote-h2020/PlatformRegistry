@@ -1,9 +1,10 @@
 package eu.h2020.symbiote.pr;
 
-import eu.h2020.symbiote.model.cim.MobileSensor;
+import eu.h2020.symbiote.model.cim.Actuator;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.cim.Service;
 import eu.h2020.symbiote.model.cim.StationarySensor;
+import eu.h2020.symbiote.pr.model.FederatedResource;
 import eu.h2020.symbiote.pr.model.ResourcesDeletedMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,16 +34,16 @@ public class SubscriptionManagerListenerTests extends PlatformRegistryBaseTestCl
         TimeUnit.MILLISECONDS.sleep(500);
 
         // Checking what is stored in the database
-        List<Resource> stored = resourceRepository.findAll();
+        List<FederatedResource> stored = resourceRepository.findAll();
         assertEquals(3, stored.size());
 
-        Resource resource1 = resourceRepository.findOne(createNewResourceId(0, "platform1"));
+        Resource resource1 = resourceRepository.findOne(createNewResourceId(0, "platform1")).getResource();
         assertTrue(resource1 instanceof StationarySensor);
 
-        Resource resource2 = resourceRepository.findOne(createNewResourceId(1, "platform1"));
-        assertTrue(resource2 instanceof MobileSensor);
+        Resource resource2 = resourceRepository.findOne(createNewResourceId(1, "platform1")).getResource();
+        assertTrue(resource2 instanceof Actuator);
 
-        Resource resource3 = resourceRepository.findOne(createNewResourceId(2, "platform1"));
+        Resource resource3 = resourceRepository.findOne(createNewResourceId(2, "platform1")).getResource();
         assertTrue(resource3 instanceof Service);
     }
 
@@ -55,7 +56,7 @@ public class SubscriptionManagerListenerTests extends PlatformRegistryBaseTestCl
         TimeUnit.MILLISECONDS.sleep(500);
 
         // Checking what is stored in the database
-        List<Resource> stored = resourceRepository.findAll();
+        List<FederatedResource> stored = resourceRepository.findAll();
         assertEquals(3, stored.size());
 
         ResourcesDeletedMessage deleteMessage = new ResourcesDeletedMessage(Arrays.asList(
@@ -71,6 +72,6 @@ public class SubscriptionManagerListenerTests extends PlatformRegistryBaseTestCl
 
         stored = resourceRepository.findAll();
         assertEquals(1, stored.size());
-        assertEquals(createNewResourceId(1, "platform1"), stored.get(0).getId());
+        assertEquals(createNewResourceId(1, "platform1"), stored.get(0).getResource().getId());
     }
 }

@@ -48,7 +48,13 @@ public class SubscriptionManagerListener {
     public void registerResources(NewResourcesMessage newFederatedResources) {
         log.trace("Received new federated resources from Subscription Manager: " +
                 ReflectionToStringBuilder.toString(newFederatedResources));
-         resourceService.saveFederationResources(newFederatedResources);
+
+        // ToDo: rework this to return proper error messages and/or do not requeue the request
+        try {
+            resourceService.saveFederationResources(newFederatedResources);
+        } catch (Exception e) {
+            log.info("Exception thrown during saving federated resources", e);
+        }
     }
 
     @RabbitListener(bindings = @QueueBinding(
@@ -62,6 +68,12 @@ public class SubscriptionManagerListener {
     public void deleteResources(ResourcesDeletedMessage resourcesDeleted) {
         log.trace("Received message from Subscription Manager to remove resources: " +
                 ReflectionToStringBuilder.toString(resourcesDeleted));
-        resourceService.removeFederationResources(resourcesDeleted);
+
+        // ToDo: rework this to return proper error messages and/or do not requeue the request
+        try {
+            resourceService.removeFederationResources(resourcesDeleted);
+        } catch (Exception e) {
+            log.info("Exception thrown during removing federated resources", e);
+        }
     }
 }

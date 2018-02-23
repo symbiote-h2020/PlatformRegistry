@@ -3,17 +3,16 @@ package eu.h2020.symbiote.pr;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * @author Vasileios Glykantzis (ICOM)
@@ -49,6 +48,20 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
     public void listResourcesSuccessfulTest() throws Exception {
         saveResourceToRepo();
 
+        String stationarySensorODataUrl = "https://stationarySensor.com/rap/Sensors('"
+                + createNewResourceId(0, "platform1") + "')";
+        String actuatorODataUrl = "https://actuator.com/rap/Actuators('"
+                + createNewResourceId(1, "platform1") + "')";
+        String serviceODataUrl = "https://service.com/rap/Services('"
+                + createNewResourceId(2, "platform1") + "')";
+
+        String stationarySensorRestUrl = "https://stationarySensor.com/rap/Sensor/"
+                + createNewResourceId(0, "platform1");
+        String actuatorRestUrl = "https://actuator.com/rap/Actuator/"
+                + createNewResourceId(1, "platform1");
+        String serviceRestUrl = "https://service.com/rap/Service/"
+                + createNewResourceId(2, "platform1");
+
         // Sleep to make sure that the repo has been updated before querying
         TimeUnit.MILLISECONDS.sleep(500);
 
@@ -64,7 +77,17 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
                         contains(
                                 createNewResourceId(0, "platform1"),
                                 createNewResourceId(1, "platform1"),
-                                createNewResourceId(2, "platform1"))));
-        ;
+                                createNewResourceId(2, "platform1"))))
+                .andExpect(jsonPath("$.resources[*].oDataUrl",
+                        contains(
+                                stationarySensorODataUrl,
+                                actuatorODataUrl,
+                                serviceODataUrl)))
+                .andExpect(jsonPath("$.resources[*].restUrl",
+                        contains(
+                                stationarySensorRestUrl,
+                                actuatorRestUrl,
+                                serviceRestUrl)));
+
     }
 }

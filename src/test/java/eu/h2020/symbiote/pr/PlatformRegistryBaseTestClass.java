@@ -1,10 +1,11 @@
 package eu.h2020.symbiote.pr;
 
 import eu.h2020.symbiote.cloud.model.internal.FederatedCloudResource;
+import eu.h2020.symbiote.model.cim.Actuator;
 import eu.h2020.symbiote.model.cim.MobileSensor;
-import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.cim.Service;
 import eu.h2020.symbiote.model.cim.StationarySensor;
+import eu.h2020.symbiote.pr.model.FederatedResource;
 import eu.h2020.symbiote.pr.model.NewResourcesMessage;
 import eu.h2020.symbiote.pr.model.PersistentVariable;
 import eu.h2020.symbiote.pr.repositories.PersistentVariableRepository;
@@ -13,12 +14,10 @@ import eu.h2020.symbiote.pr.services.AuthorizationService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
-import org.mockito.MockitoAnnotations;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -102,7 +101,7 @@ public abstract class PlatformRegistryBaseTestClass {
         StationarySensor stationarySensor = new StationarySensor();
         stationarySensor.setName("stationarySensor");
         stationarySensor.setDescription(Collections.singletonList("sensor1Description"));
-        stationarySensor.setInterworkingServiceURL("https://sensor1.com");
+        stationarySensor.setInterworkingServiceURL("https://stationarySensor.com");
         stationarySensor.setObservesProperty(Arrays.asList("property1", "property2"));
 
         Map<String, Boolean> federationBarteringMap1 = new HashMap<>();
@@ -117,6 +116,7 @@ public abstract class PlatformRegistryBaseTestClass {
         // Create 2nd resource
         MobileSensor mobileSensor = new MobileSensor();
         mobileSensor.setName("mobileSensor");
+        mobileSensor.setInterworkingServiceURL("https://mobileSensor.com");
 
         Map<String, Boolean> federationBarteringMap2 = new HashMap<>();
         federationBarteringMap2.put("fed1", true);
@@ -134,37 +134,37 @@ public abstract class PlatformRegistryBaseTestClass {
         return federatedCloudResources;
     }
 
-    public NewResourcesMessage createSMNewResourcesMessage() {
-        return new NewResourcesMessage(createTestResources());
-    }
+    public NewResourcesMessage createSMNewResourcesMessage() { return new NewResourcesMessage(createTestResources()); }
 
     public void saveResourceToRepo() {
         resourceRepository.save(createTestResources());
     }
 
-    public List<Resource> createTestResources() {
-        List<Resource> resources = new ArrayList<>();
+    public List<FederatedResource> createTestResources() {
+        List<FederatedResource> resources = new ArrayList<>();
 
         // Create 1st resource
         StationarySensor stationarySensor = new StationarySensor();
         stationarySensor.setId(createNewResourceId(0, "platform1"));
         stationarySensor.setName("stationarySensor");
         stationarySensor.setDescription(Collections.singletonList("sensor1Description"));
-        stationarySensor.setInterworkingServiceURL("https://sensor1.com");
+        stationarySensor.setInterworkingServiceURL("https://stationarySensor.com");
         stationarySensor.setObservesProperty(Arrays.asList("property1", "property2"));
-        resources.add(stationarySensor);
+        resources.add(new FederatedResource(stationarySensor));
 
         // Create 2nd resource
-        MobileSensor mobileSensor = new MobileSensor();
-        mobileSensor.setId(createNewResourceId(1, "platform1"));
-        mobileSensor.setName("mobileSensor");
-        resources.add(mobileSensor);
+        Actuator actuator = new Actuator();
+        actuator.setId(createNewResourceId(1, "platform1"));
+        actuator.setName("actuator");
+        actuator.setInterworkingServiceURL("https://actuator.com");
+        resources.add(new FederatedResource(actuator));
 
         // Create 3rd resource
         Service service = new Service();
         service.setId(createNewResourceId(2, "platform1"));
         service.setName("service");
-        resources.add(service);
+        service.setInterworkingServiceURL("https://service.com");
+        resources.add(new FederatedResource(service));
 
         return resources;
     }

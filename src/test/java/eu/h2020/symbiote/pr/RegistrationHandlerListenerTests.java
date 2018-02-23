@@ -4,11 +4,14 @@ import eu.h2020.symbiote.cloud.model.internal.FederatedCloudResource;
 import eu.h2020.symbiote.model.cim.MobileSensor;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.cim.StationarySensor;
+import eu.h2020.symbiote.pr.model.FederatedResource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -34,7 +37,7 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         assertEquals(1, result.get("sensor2InternalId").size());
 
         // Checking what is stored in the database
-        List<Resource> stored = resourceRepository.findAll();
+        List<FederatedResource> stored = resourceRepository.findAll();
         assertEquals(3, stored.size());
 
         // Get the current sequenceId and remove the number of the registered federatedCloudResources to get the first
@@ -42,16 +45,16 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         // We do that because idSequence is used by previous tests too, so its initial value might not be 0
         long initialId = (Long) idSequence.getValue() - stored.size();
 
-        Resource resource1 = resourceRepository.findOne(createNewResourceId(initialId));
+        Resource resource1 = resourceRepository.findOne(createNewResourceId(initialId)).getResource();
         assertTrue(resource1 instanceof StationarySensor);
 
-        Resource resource2 = resourceRepository.findOne(createNewResourceId(initialId + 1));
+        Resource resource2 = resourceRepository.findOne(createNewResourceId(initialId + 1)).getResource();
         assertTrue(resource2 instanceof StationarySensor);
         assertTrue(resource1.getBartered() != resource2.getBartered());
         assertEquals("stationarySensor", resource1.getName());
         assertEquals(resource1.getName(), resource2.getName());
 
-        Resource resource3 = resourceRepository.findOne(createNewResourceId(initialId + 2));
+        Resource resource3 = resourceRepository.findOne(createNewResourceId(initialId + 2)).getResource();
         assertTrue(resource3 instanceof MobileSensor);
         assertTrue(resource3.getBartered());
         assertEquals("mobileSensor", resource3.getName());
@@ -69,7 +72,7 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         assertEquals(1, result.get("sensor2InternalId").size());
 
         // Checking what is stored in the database
-        List<Resource> stored = resourceRepository.findAll();
+        List<FederatedResource> stored = resourceRepository.findAll();
         assertEquals(3, stored.size());
 
         // Get the current sequenceId and remove the number of the registered federatedCloudResources to get the first
@@ -81,13 +84,12 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         resourceIds.add(createNewResourceId(initialId));
         resourceIds.add(createNewResourceId(initialId + 2));
 
-        rabbitTemplate.convertAndSend(platformRegistryExchange, rhRemovalRequestKey, resourceIds);
-
-        // Sleep to make sure that the repo has been updated before querying
-        TimeUnit.MILLISECONDS.sleep(500);
+        List<String> removalResult = (List<String>) rabbitTemplate
+                .convertSendAndReceive(platformRegistryExchange, rhRemovalRequestKey, resourceIds);
 
         stored = resourceRepository.findAll();
         assertEquals(1, stored.size());
-        assertEquals(createNewResourceId(initialId + 1), stored.get(0).getId());
+        assertEquals(createNewResourceId(initialId + 1), stored.get(0).getResource().getId());
+        assertTrue(removalResult.containsAll(resourceIds));
     }
 }

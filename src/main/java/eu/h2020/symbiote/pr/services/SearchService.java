@@ -1,7 +1,6 @@
 package eu.h2020.symbiote.pr.services;
 
-import eu.h2020.symbiote.model.cim.Resource;
-import eu.h2020.symbiote.pr.model.FederationResourceResult;
+import eu.h2020.symbiote.pr.model.FederatedResource;
 import eu.h2020.symbiote.pr.model.FederationSearchResult;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import org.apache.commons.logging.Log;
@@ -44,11 +43,11 @@ public class SearchService {
         if (checkListResourcesRequestValidity.getStatusCode() != HttpStatus.OK)
             return checkListResourcesRequestValidity;
 
-        List<Resource> resources = resourceRepository.findAll();
+        List<FederatedResource> resources = resourceRepository.findAll();
         FederationSearchResult response = new FederationSearchResult();
 
-        for (Resource resource : resources) {
-            response.addFederationResourceResult(new FederationResourceResult(resource));
+        for (FederatedResource federatedResource : resources) {
+            response.addFederationResourceResult(federatedResource);
         }
 
         return new ResponseEntity<>(response, HttpStatus.OK);

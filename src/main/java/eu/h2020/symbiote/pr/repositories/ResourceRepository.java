@@ -1,6 +1,6 @@
 package eu.h2020.symbiote.pr.repositories;
 
-import eu.h2020.symbiote.model.cim.Resource;
+import eu.h2020.symbiote.pr.model.FederatedResource;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
@@ -11,7 +11,7 @@ import java.util.List;
  * @since 2/20/2018.
  */
 @RepositoryRestResource(collectionResourceRel = "resources", path = "resources")
-public interface ResourceRepository extends MongoRepository<Resource, String> {
-    Resource findByFederationId(String federationId);
-    List<Resource> deleteAllByIdIn(List<String> ids);
+public interface ResourceRepository extends MongoRepository<FederatedResource, String> {
+    FederatedResource findByResourceFederationId(String federationId);
+    List<FederatedResource> deleteAllByIdIn(List<String> ids);
 }

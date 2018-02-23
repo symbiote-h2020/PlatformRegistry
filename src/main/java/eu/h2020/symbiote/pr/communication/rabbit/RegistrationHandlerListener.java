@@ -12,6 +12,8 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +36,7 @@ public class RegistrationHandlerListener {
      * Spring AMQP Listener for Resource Registration requests from Registration Handler.
      *
      * @param federatedCloudResources Contains resource registration request coming from Registration Handler
+     * @return a map containing the internalIds and the federationIds inside each federation
      */
     @RabbitListener(bindings = @QueueBinding(
             value = @Queue(value = "${rabbit.queueName.platformRegistry.rhRegistrationRequest}", durable = "${rabbit.exchange.platformRegistry.durable}",
@@ -46,13 +49,22 @@ public class RegistrationHandlerListener {
     public Map<String, Map<String,String>> registerResources(List<FederatedCloudResource> federatedCloudResources) {
         log.trace("Received resource registration request from registration Handler: " +
                 ReflectionToStringBuilder.toString(federatedCloudResources));
-        return resourceService.savePlatformResources(federatedCloudResources);
+
+        // ToDo: rework this to return proper error messages and/or do not requeue the request
+        try {
+            return resourceService.savePlatformResources(federatedCloudResources);
+        } catch (Exception e) {
+            log.info("Exception thrown during saving platform resources", e);
+        }
+
+        return new HashMap<>();
     }
 
     /**
      * Spring AMQP Listener for Resource Removal requests from Registration Handler.
      *
      * @param resourceIds Contains a list of resource federationIds to be deleted
+     * @return a list of the federationIds of the removed resources
      */
     @RabbitListener(bindings = @QueueBinding(
             value = @Queue(value = "${rabbit.queueName.platformRegistry.rhRemovalRequest}", durable = "${rabbit.exchange.platformRegistry.durable}",
@@ -62,9 +74,17 @@ public class RegistrationHandlerListener {
                     internal = "${rabbit.exchange.platformRegistry.internal}", type = "${rabbit.exchange.platformRegistry.type}"),
             key = "${rabbit.routingKey.platformRegistry.rhRemovalRequest}")
     )
-    public void removeResources(List<String> resourceIds) {
+    public List<String> removeResources(List<String> resourceIds) {
         log.trace("Received resource removal request from registration Handler: " +
                 ReflectionToStringBuilder.toString(resourceIds));
-        resourceService.removePlatformResources(resourceIds);
+
+        // ToDo: rework this to return proper error messages and/or do not requeue the request
+        try {
+            return resourceService.removePlatformResources(resourceIds);
+        } catch (Exception e) {
+            log.info("Exception thrown during removing platform resources", e);
+        }
+
+        return new ArrayList<>();
     }
 }

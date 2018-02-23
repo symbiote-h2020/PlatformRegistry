@@ -11,24 +11,24 @@ import java.util.List;
  * @since 2/22/2018.
  */
 public class FederationSearchResult {
-    private List<FederationResourceResult> resources;
+    private List<FederatedResource> resources;
 
     public FederationSearchResult() {
         resources = new ArrayList<>();
     }
 
     @JsonCreator
-    public FederationSearchResult(@JsonProperty(value = "resources") List<FederationResourceResult> resources) {
+    public FederationSearchResult(@JsonProperty(value = "resources") List<FederatedResource> resources) {
         if (resources != null)
             this.resources = resources;
         else
             this.resources = new ArrayList<>();
     }
 
-    public List<FederationResourceResult> getResources() { return resources; }
-    public void setResources(List<FederationResourceResult> resources) { this.resources = resources; }
+    public List<FederatedResource> getResources() { return resources; }
+    public void setResources(List<FederatedResource> resources) { this.resources = resources; }
 
-    public void addFederationResourceResult(FederationResourceResult federationResourceResult) {
-        resources.add(federationResourceResult);
+    public void addFederationResourceResult(FederatedResource federatedResource) {
+        resources.add(federatedResource);
     }
 }

@@ -2,7 +2,6 @@ package eu.h2020.symbiote.pr.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import eu.h2020.symbiote.model.cim.Resource;
 
 import java.util.List;
 
@@ -11,13 +10,18 @@ import java.util.List;
  * @since 2/21/2018.
  */
 public class NewResourcesMessage {
-    private List<Resource> newResources;
+    private List<FederatedResource> newFederatedResources;
 
     @JsonCreator
-    public NewResourcesMessage(@JsonProperty(value = "newResources") List<Resource> newResources) {
-        this.newResources = newResources;
+    public NewResourcesMessage(@JsonProperty(value = "newFederatedResources") List<FederatedResource> newFederatedResources) {
+        this.newFederatedResources = newFederatedResources;
     }
 
-    public List<Resource> getNewResources() { return newResources; }
-    public void setNewResources(List<Resource> newResources) { this.newResources = newResources; }
+    public List<FederatedResource> getNewFederatedResources() {
+        return newFederatedResources;
+    }
+
+    public void setNewFederatedResources(List<FederatedResource> newFederatedResources) {
+        this.newFederatedResources = newFederatedResources;
+    }
 }

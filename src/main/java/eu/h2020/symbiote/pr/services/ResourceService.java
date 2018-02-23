@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.cloud.model.internal.FederatedCloudResource;
 import eu.h2020.symbiote.model.cim.Resource;
+import eu.h2020.symbiote.pr.model.FederatedResource;
 import eu.h2020.symbiote.pr.model.NewResourcesMessage;
 import eu.h2020.symbiote.pr.model.PersistentVariable;
 import eu.h2020.symbiote.pr.model.ResourcesDeletedMessage;
@@ -18,10 +19,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Vasileios Glykantzis (ICOM)
@@ -58,7 +57,7 @@ public class ResourceService {
     public Map<String, Map<String, String>> savePlatformResources(List<FederatedCloudResource> federatedCloudResources) {
         log.trace("savePlatformResources: " + ReflectionToStringBuilder.toString(federatedCloudResources));
 
-        List<Resource> resourcesToSave = new LinkedList<>();
+        List<FederatedResource> resourcesToSave = new LinkedList<>();
         Map<String, Map<String, String>> internalIdResourceIdMap = new HashMap<>();
 
         long id = (Long) idSequence.getValue();
@@ -80,7 +79,7 @@ public class ResourceService {
                     newResource.setId(createNewResourceId(id));
                     newResource.setFederationId(federationId);
                     newResource.setBartered(isBartered);
-                    resourcesToSave.add(newResource);
+                    resourcesToSave.add(new FederatedResource(newResource));
                     federationResourceIdMap.put(federationId, newResource.getId());
                     id++;
                 }
@@ -98,12 +97,15 @@ public class ResourceService {
         return internalIdResourceIdMap;
     }
 
-    public void removePlatformResources(List<String> resourceIds) {
+    public List<String> removePlatformResources(List<String> resourceIds) {
         log.trace("removeResources: " + ReflectionToStringBuilder.toString(resourceIds));
 
         // Todo: maybe check if these are platform resources
-        if (resourceIds != null)
-            resourceRepository.deleteAllByIdIn(resourceIds);
+        return resourceIds != null ?
+                resourceRepository.deleteAllByIdIn(resourceIds)
+                        .stream().map(resource -> resource.getResource().getId()).collect(Collectors.toList()) :
+                new ArrayList<>();
+
     }
 
     public void saveFederationResources(NewResourcesMessage newFederatedResources) {
@@ -113,8 +115,8 @@ public class ResourceService {
         // Platform resources should not be present here. Only, federated resources offered by other platforms should be
         // in the NewResourceMessage
 
-        if (newFederatedResources.getNewResources() != null)
-            resourceRepository.save(newFederatedResources.getNewResources());
+        if (newFederatedResources.getNewFederatedResources() != null)
+            resourceRepository.save(newFederatedResources.getNewFederatedResources());
     }
 
     public void removeFederationResources(ResourcesDeletedMessage resourcesDeleted) {
