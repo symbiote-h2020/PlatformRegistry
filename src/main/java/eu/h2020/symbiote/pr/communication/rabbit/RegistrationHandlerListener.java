@@ -38,13 +38,21 @@ public class RegistrationHandlerListener {
      * @param federatedCloudResources Contains resource registration request coming from Registration Handler
      * @return a map containing the internalIds and the federationIds inside each federation
      */
-    @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(value = "${rabbit.queueName.platformRegistry.rhRegistrationRequest}", durable = "${rabbit.exchange.platformRegistry.durable}",
-                    autoDelete = "${rabbit.exchange.platformRegistry.autodelete}", exclusive = "false"),
-            exchange = @Exchange(value = "${rabbit.exchange.platformRegistry.name}", ignoreDeclarationExceptions = "true",
-                    durable = "${rabbit.exchange.platformRegistry.durable}", autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
-                    internal = "${rabbit.exchange.platformRegistry.internal}", type = "${rabbit.exchange.platformRegistry.type}"),
-            key = "${rabbit.routingKey.platformRegistry.rhRegistrationRequest}")
+    @RabbitListener(
+            bindings = @QueueBinding(
+                    value = @Queue(
+                            value = "${rabbit.queueName.platformRegistry.rhRegistrationRequest}",
+                            durable = "${rabbit.exchange.platformRegistry.durable}",
+                            autoDelete = "${rabbit.exchange.platformRegistry.autodelete}",
+                            exclusive = "false"),
+                    exchange = @Exchange(
+                            value = "${rabbit.exchange.platformRegistry.name}",
+                            ignoreDeclarationExceptions = "true",
+                            durable = "${rabbit.exchange.platformRegistry.durable}",
+                            autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
+                            internal = "${rabbit.exchange.platformRegistry.internal}",
+                            type = "${rabbit.exchange.platformRegistry.type}"),
+                    key = "${rabbit.routingKey.platformRegistry.rhRegistrationRequest}")
     )
     public Map<String, Map<String,String>> registerResources(List<FederatedCloudResource> federatedCloudResources) {
         log.trace("Received resource registration request from registration Handler: " +
@@ -66,13 +74,20 @@ public class RegistrationHandlerListener {
      * @param resourceIds Contains a list of resource federationIds to be deleted
      * @return a list of the federationIds of the removed resources
      */
-    @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(value = "${rabbit.queueName.platformRegistry.rhRemovalRequest}", durable = "${rabbit.exchange.platformRegistry.durable}",
-                    autoDelete = "${rabbit.exchange.platformRegistry.autodelete}", exclusive = "false"),
-            exchange = @Exchange(value = "${rabbit.exchange.platformRegistry.name}", ignoreDeclarationExceptions = "true",
-                    durable = "${rabbit.exchange.platformRegistry.durable}", autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
-                    internal = "${rabbit.exchange.platformRegistry.internal}", type = "${rabbit.exchange.platformRegistry.type}"),
-            key = "${rabbit.routingKey.platformRegistry.rhRemovalRequest}")
+    @RabbitListener(
+            bindings = @QueueBinding(
+                    value = @Queue(value = "${rabbit.queueName.platformRegistry.rhRemovalRequest}",
+                            durable = "${rabbit.exchange.platformRegistry.durable}",
+                            autoDelete = "${rabbit.exchange.platformRegistry.autodelete}",
+                            exclusive = "false"),
+                    exchange = @Exchange(
+                            value = "${rabbit.exchange.platformRegistry.name}",
+                            ignoreDeclarationExceptions = "true",
+                            durable = "${rabbit.exchange.platformRegistry.durable}",
+                            autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
+                            internal = "${rabbit.exchange.platformRegistry.internal}",
+                            type = "${rabbit.exchange.platformRegistry.type}"),
+                    key = "${rabbit.routingKey.platformRegistry.rhRemovalRequest}")
     )
     public List<String> removeResources(List<String> resourceIds) {
         log.trace("Received resource removal request from registration Handler: " +

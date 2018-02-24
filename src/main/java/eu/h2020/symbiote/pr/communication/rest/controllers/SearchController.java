@@ -1,4 +1,4 @@
-package eu.h2020.symbiote.pr.rest.controllers;
+package eu.h2020.symbiote.pr.communication.rest.controllers;
 
 import eu.h2020.symbiote.pr.services.SearchService;
 import org.apache.commons.logging.Log;
@@ -7,10 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author Vasileios Glykantzis (ICOM)
@@ -35,4 +32,10 @@ public class SearchController {
         return searchService.listResources(httpHeaders);
     }
 
+    @GetMapping("/list_federation_resources/{federationId}")
+    public ResponseEntity listFederationResources(@RequestHeader HttpHeaders httpHeaders,
+                                                  @PathVariable String federationId) {
+        log.trace("Request to /list_federation_resources");
+        return searchService.listFederationResources(httpHeaders, federationId);
+    }
 }

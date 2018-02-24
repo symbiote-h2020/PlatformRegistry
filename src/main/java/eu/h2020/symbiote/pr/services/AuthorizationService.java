@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.pr.services;
 
+import eu.h2020.symbiote.pr.helpers.AuthorizationServiceHelper;
 import eu.h2020.symbiote.security.ComponentSecurityHandlerFactory;
 import eu.h2020.symbiote.security.accesspolicies.IAccessPolicy;
 import eu.h2020.symbiote.security.accesspolicies.common.AccessPolicyFactory;
@@ -80,10 +81,12 @@ public class AuthorizationService {
             enableSecurity();
     }
 
-    public ResponseEntity checkListResourcesRequest(HttpHeaders httpHeaders) {
+    public ResponseEntity checkListResourcesRequest(HttpHeaders httpHeaders, String serviceResponse) {
         if (securityEnabled) {
             if (httpHeaders == null)
-                return new ResponseEntity<>("HttpHeaders are null", HttpStatus.BAD_REQUEST);
+                return AuthorizationServiceHelper.addSecurityService(
+                        "HttpHeaders are null", new HttpHeaders(),
+                        HttpStatus.BAD_REQUEST, serviceResponse);
 
             SecurityRequest securityRequest;
             try {
@@ -91,7 +94,9 @@ public class AuthorizationService {
                 log.debug("Received SecurityRequest of listResources request to be verified: (" + securityRequest + ")");
             } catch (InvalidArgumentsException e) {
                 log.info("Could not create the SecurityRequest", e);
-                return new ResponseEntity<>(e.getErrorMessage(), HttpStatus.BAD_REQUEST);
+                return AuthorizationServiceHelper.addSecurityService(
+                        e.getErrorMessage(), new HttpHeaders(),
+                        HttpStatus.BAD_REQUEST, serviceResponse);
             }
 
             Set<String> checkedPolicies;
@@ -99,13 +104,17 @@ public class AuthorizationService {
                 checkedPolicies = checkSingleLocalHomeTokenAccessPolicy(securityRequest);
             } catch (Exception e) {
                 log.info("Could not verify the access policies", e);
-                return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+                return AuthorizationServiceHelper.addSecurityService(
+                        e.getMessage(), new HttpHeaders(),
+                        HttpStatus.INTERNAL_SERVER_ERROR, serviceResponse);
             }
 
             if (checkedPolicies.size() >= 1) {
                 return new ResponseEntity<>(HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("The stored resource access policy was not satisfied", HttpStatus.UNAUTHORIZED);
+                return AuthorizationServiceHelper.addSecurityService(
+                        "The stored resource access policy was not satisfied",
+                        new HttpHeaders(), HttpStatus.UNAUTHORIZED, serviceResponse);
             }
         } else {
             log.debug("checkAccess: Security is disabled");

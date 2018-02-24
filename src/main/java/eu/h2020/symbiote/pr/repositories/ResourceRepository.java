@@ -12,6 +12,6 @@ import java.util.List;
  */
 @RepositoryRestResource(collectionResourceRel = "resources", path = "resources")
 public interface ResourceRepository extends MongoRepository<FederatedResource, String> {
-    FederatedResource findByResourceFederationId(String federationId);
+    List<FederatedResource> findByResourceFederationId(String federationId);
     List<FederatedResource> deleteAllByIdIn(List<String> ids);
 }

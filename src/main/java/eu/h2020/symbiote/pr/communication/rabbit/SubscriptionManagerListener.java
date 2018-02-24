@@ -37,15 +37,23 @@ public class SubscriptionManagerListener {
      * Spring AMQP Listener for listening to new FederationResources updates from Subscription Manager.
      * @param newFederatedResources message received from Subscription Manager
      */
-    @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(value = "${rabbit.queueName.platformRegistry.smStoreResources}", durable = "${rabbit.exchange.platformRegistry.durable}",
-                    autoDelete = "${rabbit.exchange.platformRegistry.autodelete}", exclusive = "false"),
-            exchange = @Exchange(value = "${rabbit.exchange.platformRegistry.name}", ignoreDeclarationExceptions = "true",
-                    durable = "${rabbit.exchange.platformRegistry.durable}", autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
-                    internal = "${rabbit.exchange.platformRegistry.internal}", type = "${rabbit.exchange.platformRegistry.type}"),
-            key = "${rabbit.routingKey.platformRegistry.smStoreResources}")
+    @RabbitListener(
+            bindings = @QueueBinding(
+                    value = @Queue(
+                            value = "${rabbit.queueName.platformRegistry.smAddOrUpdateResources}",
+                            durable = "${rabbit.exchange.platformRegistry.durable}",
+                            autoDelete = "${rabbit.exchange.platformRegistry.autodelete}"
+                            , exclusive = "false"),
+                    exchange = @Exchange(
+                            value = "${rabbit.exchange.platformRegistry.name}",
+                            ignoreDeclarationExceptions = "true",
+                            durable = "${rabbit.exchange.platformRegistry.durable}",
+                            autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
+                            internal = "${rabbit.exchange.platformRegistry.internal}",
+                            type = "${rabbit.exchange.platformRegistry.type}"),
+                    key = "${rabbit.routingKey.platformRegistry.smAddOrUpdateResources}")
     )
-    public void registerResources(NewResourcesMessage newFederatedResources) {
+    public void addOrUpdateResources(NewResourcesMessage newFederatedResources) {
         log.trace("Received new federated resources from Subscription Manager: " +
                 ReflectionToStringBuilder.toString(newFederatedResources));
 
@@ -57,13 +65,21 @@ public class SubscriptionManagerListener {
         }
     }
 
-    @RabbitListener(bindings = @QueueBinding(
-            value = @Queue(value = "${rabbit.queueName.platformRegistry.smRemoveResources}", durable = "${rabbit.exchange.platformRegistry.durable}",
-                    autoDelete = "${rabbit.exchange.platformRegistry.autodelete}", exclusive = "false"),
-            exchange = @Exchange(value = "${rabbit.exchange.platformRegistry.name}", ignoreDeclarationExceptions = "true",
-                    durable = "${rabbit.exchange.platformRegistry.durable}", autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
-                    internal = "${rabbit.exchange.platformRegistry.internal}", type = "${rabbit.exchange.platformRegistry.type}"),
-            key = "${rabbit.routingKey.platformRegistry.smRemoveResources}")
+    @RabbitListener(
+            bindings = @QueueBinding(
+                    value = @Queue(
+                            value = "${rabbit.queueName.platformRegistry.smRemoveResources}",
+                            durable = "${rabbit.exchange.platformRegistry.durable}",
+                            autoDelete = "${rabbit.exchange.platformRegistry.autodelete}",
+                            exclusive = "false"),
+                    exchange = @Exchange(
+                            value = "${rabbit.exchange.platformRegistry.name}",
+                            ignoreDeclarationExceptions = "true",
+                            durable = "${rabbit.exchange.platformRegistry.durable}",
+                            autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
+                            internal = "${rabbit.exchange.platformRegistry.internal}",
+                            type = "${rabbit.exchange.platformRegistry.type}"),
+                    key = "${rabbit.routingKey.platformRegistry.smRemoveResources}")
     )
     public void deleteResources(ResourcesDeletedMessage resourcesDeleted) {
         log.trace("Received message from Subscription Manager to remove resources: " +

@@ -67,11 +67,13 @@ public abstract class PlatformRegistryBaseTestClass {
     @Value("${rabbit.routingKey.platformRegistry.rhRemovalRequest}")
     protected String rhRemovalRequestKey;
 
-    @Value("${rabbit.routingKey.platformRegistry.smStoreResources}")
-    protected String smStoreResourcesKey;
+    @Value("${rabbit.routingKey.platformRegistry.smAddOrUpdateResources}")
+    protected String smAddOrUpdateResourcesKey;
 
     @Value("${rabbit.routingKey.platformRegistry.smRemoveResources}")
     protected String smRemoveResourcesKey;
+
+    protected String serviceResponse = "testServiceResponse";
 
     @Before
     public void setup() {
@@ -150,6 +152,7 @@ public abstract class PlatformRegistryBaseTestClass {
         stationarySensor.setDescription(Collections.singletonList("sensor1Description"));
         stationarySensor.setInterworkingServiceURL("https://stationarySensor.com");
         stationarySensor.setObservesProperty(Arrays.asList("property1", "property2"));
+        stationarySensor.setFederationId("fed1");
         resources.add(new FederatedResource(stationarySensor));
 
         // Create 2nd resource
@@ -157,6 +160,7 @@ public abstract class PlatformRegistryBaseTestClass {
         actuator.setId(createNewResourceId(1, "platform1"));
         actuator.setName("actuator");
         actuator.setInterworkingServiceURL("https://actuator.com");
+        actuator.setFederationId("fed2");
         resources.add(new FederatedResource(actuator));
 
         // Create 3rd resource
@@ -164,6 +168,7 @@ public abstract class PlatformRegistryBaseTestClass {
         service.setId(createNewResourceId(2, "platform1"));
         service.setName("service");
         service.setInterworkingServiceURL("https://service.com");
+        service.setFederationId("fed1");
         resources.add(new FederatedResource(service));
 
         return resources;

@@ -28,7 +28,7 @@ public class SubscriptionManagerListenerTests extends PlatformRegistryBaseTestCl
     @Test
     public void newResourcesTest() throws InterruptedException{
 
-        rabbitTemplate.convertAndSend(platformRegistryExchange, smStoreResourcesKey, createSMNewResourcesMessage());
+        rabbitTemplate.convertAndSend(platformRegistryExchange, smAddOrUpdateResourcesKey, createSMNewResourcesMessage());
 
         // Sleep to make sure that the platform has been updated in the repo before querying
         TimeUnit.MILLISECONDS.sleep(500);
@@ -50,7 +50,7 @@ public class SubscriptionManagerListenerTests extends PlatformRegistryBaseTestCl
     @Test
     public void resourcesDeletedTest() throws InterruptedException{
 
-        rabbitTemplate.convertAndSend(platformRegistryExchange, smStoreResourcesKey, createSMNewResourcesMessage());
+        rabbitTemplate.convertAndSend(platformRegistryExchange, smAddOrUpdateResourcesKey, createSMNewResourcesMessage());
 
         // Sleep to make sure that the repo has been updated before querying
         TimeUnit.MILLISECONDS.sleep(500);
