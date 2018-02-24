@@ -6,7 +6,7 @@ import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.cloud.model.internal.FederatedCloudResource;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.pr.model.FederatedResource;
-import eu.h2020.symbiote.pr.model.NewResourcesMessage;
+import eu.h2020.symbiote.pr.model.ResourcesAddedOrUpdatedMessage;
 import eu.h2020.symbiote.pr.model.PersistentVariable;
 import eu.h2020.symbiote.pr.model.ResourcesDeletedMessage;
 import eu.h2020.symbiote.pr.repositories.PersistentVariableRepository;
@@ -15,6 +15,7 @@ import io.jsonwebtoken.lang.Assert;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -32,22 +33,40 @@ public class ResourceService {
     private static Log log = LogFactory.getLog(ResourceService.class);
 
     private ResourceRepository resourceRepository;
+    private RabbitTemplate rabbitTemplate;
     private PersistentVariableRepository persistentVariableRepository;
     private PersistentVariable idSequence;
     private ObjectMapper mapper = new ObjectMapper();
     private String platformId;
+    private String subscriptionManagerExchange;
+    private String smAddOrUpdateResourcesKey;
+    private String smRemoveResourcesKey;
 
     @Autowired
     public ResourceService(ResourceRepository resourceRepository,
+                           RabbitTemplate rabbitTemplate,
                            PersistentVariableRepository persistentVariableRepository,
                            PersistentVariable idSequence,
-                           @Value("${platform.id}") String platformId) {
+                           @Value("${platform.id}") String platformId,
+                           @Value("${rabbit.exchange.subscriptionManager.name}") String subscriptionManagerExchange,
+                           @Value("${rabbit.routingKey.subscriptionManager.addOrUpdateResources}") String smAddOrUpdateResourcesKey,
+                           @Value("${rabbit.routingKey.subscriptionManager.removeResources}") String smRemoveResourcesKey) {
         this.resourceRepository = resourceRepository;
+        this.rabbitTemplate = rabbitTemplate;
         this.persistentVariableRepository = persistentVariableRepository;
         this.idSequence = idSequence;
 
         Assert.notNull(platformId, "The platformId should not be null");
         this.platformId = platformId;
+
+        Assert.notNull(subscriptionManagerExchange, "The subscriptionManagerExchange should not be null");
+        this.subscriptionManagerExchange = subscriptionManagerExchange;
+
+        Assert.notNull(smAddOrUpdateResourcesKey, "The smAddOrUpdateResourcesKey should not be null");
+        this.smAddOrUpdateResourcesKey = smAddOrUpdateResourcesKey;
+
+        Assert.notNull(smRemoveResourcesKey, "The smRemoveResourcesKey should not be null");
+        this.smRemoveResourcesKey = smRemoveResourcesKey;
     }
 
     /**
@@ -94,7 +113,9 @@ public class ResourceService {
         idSequence.setValue(id);
         persistentVariableRepository.save(idSequence);
 
-        // Todo: inform Subscription Manager for the new Resources
+        // Inform Subscription Manager for the new resources
+        rabbitTemplate.convertAndSend(subscriptionManagerExchange, smAddOrUpdateResourcesKey,
+                new ResourcesAddedOrUpdatedMessage(resourcesToSave));
 
         return internalIdResourceIdMap;
     }
@@ -134,7 +155,9 @@ public class ResourceService {
 
         resourceRepository.save(resourcesToUpdate);
 
-        // Todo: inform Subscription Manager for the new Resources
+        // Inform Subscription Manager for the updated resources
+        rabbitTemplate.convertAndSend(subscriptionManagerExchange, smAddOrUpdateResourcesKey,
+                new ResourcesAddedOrUpdatedMessage(resourcesToUpdate));
 
         // We return only the resources which were updated
         return existingResourceIds;
@@ -149,23 +172,27 @@ public class ResourceService {
         log.trace("removeResources: " + ReflectionToStringBuilder.toString(resourceIds));
 
         // Todo: maybe check if these are platform resources
-
-        return resourceIds != null ?
+        List<String> resourcesRemoved = resourceIds != null ?
                 resourceRepository.deleteAllByIdIn(resourceIds)
                         .stream().map(resource -> resource.getResource().getId()).collect(Collectors.toList()) :
                 new ArrayList<>();
 
+        // Inform Subscription Manager for the removed resources
+        rabbitTemplate.convertAndSend(subscriptionManagerExchange, smRemoveResourcesKey,
+                new ResourcesDeletedMessage(resourcesRemoved));
+
+        return resourcesRemoved;
     }
 
-    public void saveFederationResources(NewResourcesMessage newFederatedResources) {
-        log.trace("saveFederationResources: " + ReflectionToStringBuilder.toString(newFederatedResources));
+    public void addOrUpdateFederationResources(ResourcesAddedOrUpdatedMessage resourcesAddedOrUpdated) {
+        log.trace("addOrUpdateFederationResources: " + ReflectionToStringBuilder.toString(resourcesAddedOrUpdated));
 
         // Todo: maybe remove the platform resources from the message.
         // Platform resources should not be present here. Only, federated resources offered by other platforms should be
         // in the NewResourceMessage
 
-        if (newFederatedResources.getNewFederatedResources() != null)
-            resourceRepository.save(newFederatedResources.getNewFederatedResources());
+        if (resourcesAddedOrUpdated.getNewFederatedResources() != null)
+            resourceRepository.save(resourcesAddedOrUpdated.getNewFederatedResources());
     }
 
     public void removeFederationResources(ResourcesDeletedMessage resourcesDeleted) {

@@ -3,8 +3,8 @@ package eu.h2020.symbiote.pr;
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.cloud.model.internal.FederatedCloudResource;
 import eu.h2020.symbiote.model.cim.*;
+import eu.h2020.symbiote.pr.dummyListeners.DummySubscriptionManagerListener;
 import eu.h2020.symbiote.pr.model.FederatedResource;
-import eu.h2020.symbiote.pr.model.NewResourcesMessage;
 import eu.h2020.symbiote.pr.model.PersistentVariable;
 import eu.h2020.symbiote.pr.repositories.PersistentVariableRepository;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
@@ -54,26 +54,29 @@ public abstract class PlatformRegistryBaseTestClass {
     @Autowired
     protected PersistentVariable idSequence;
 
+    @Autowired
+    protected DummySubscriptionManagerListener dummySubscriptionManagerListener;
+
     @Value("${platform.id}")
     protected String platformId;
 
     @Value("${rabbit.exchange.platformRegistry.name}")
     protected String platformRegistryExchange;
 
-    @Value("${rabbit.routingKey.platformRegistry.rhRegistrationRequest}")
-    protected String rhRegistrationRequestKey;
+    @Value("${rabbit.routingKey.platformRegistry.registrationRequest}")
+    protected String registrationRequestKey;
 
-    @Value("${rabbit.routingKey.platformRegistry.rhUpdateRequest}")
-    protected String rhUpdateRequestKey;
+    @Value("${rabbit.routingKey.platformRegistry.updateRequest}")
+    protected String updateRequestKey;
 
-    @Value("${rabbit.routingKey.platformRegistry.rhRemovalRequest}")
-    protected String rhRemovalRequestKey;
+    @Value("${rabbit.routingKey.platformRegistry.removalRequest}")
+    protected String removalRequestKey;
 
-    @Value("${rabbit.routingKey.platformRegistry.smAddOrUpdateResources}")
-    protected String smAddOrUpdateResourcesKey;
+    @Value("${rabbit.routingKey.platformRegistry.addOrUpdateResources}")
+    protected String addOrUpdateResourcesKey;
 
-    @Value("${rabbit.routingKey.platformRegistry.smRemoveResources}")
-    protected String smRemoveResourcesKey;
+    @Value("${rabbit.routingKey.platformRegistry.removeResources}")
+    protected String removeResourcesKey;
 
     protected String serviceResponse = "testServiceResponse";
 
@@ -84,6 +87,7 @@ public abstract class PlatformRegistryBaseTestClass {
     public void setup() {
         resourceRepository.deleteAll();
         persistentVariableRepository.deleteAll();
+        dummySubscriptionManagerListener.clearLists();
 
         this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
     }

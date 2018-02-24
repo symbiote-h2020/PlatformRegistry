@@ -5,7 +5,7 @@ import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.cim.Service;
 import eu.h2020.symbiote.model.cim.StationarySensor;
 import eu.h2020.symbiote.pr.model.FederatedResource;
-import eu.h2020.symbiote.pr.model.NewResourcesMessage;
+import eu.h2020.symbiote.pr.model.ResourcesAddedOrUpdatedMessage;
 import eu.h2020.symbiote.pr.model.ResourcesDeletedMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,8 +29,8 @@ public class SubscriptionManagerListenerTests extends PlatformRegistryBaseTestCl
     @Test
     public void newResourcesTest() throws InterruptedException{
 
-        rabbitTemplate.convertAndSend(platformRegistryExchange, smAddOrUpdateResourcesKey,
-                new NewResourcesMessage(createTestFederatedResources(testPlatformId)));
+        rabbitTemplate.convertAndSend(platformRegistryExchange, addOrUpdateResourcesKey,
+                new ResourcesAddedOrUpdatedMessage(createTestFederatedResources(testPlatformId)));
 
         // Sleep to make sure that the platform has been updated in the repo before querying
         TimeUnit.MILLISECONDS.sleep(500);
@@ -61,7 +61,7 @@ public class SubscriptionManagerListenerTests extends PlatformRegistryBaseTestCl
                 createNewResourceId(1000, testPlatformId) // Does not exist
         ));
 
-        rabbitTemplate.convertAndSend(platformRegistryExchange, smRemoveResourcesKey, deleteMessage);
+        rabbitTemplate.convertAndSend(platformRegistryExchange, removeResourcesKey, deleteMessage);
 
         // Sleep to make sure that the repo has been updated before querying
         TimeUnit.MILLISECONDS.sleep(500);

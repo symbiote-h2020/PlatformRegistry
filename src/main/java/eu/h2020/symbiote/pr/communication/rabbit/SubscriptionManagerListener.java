@@ -1,8 +1,6 @@
 package eu.h2020.symbiote.pr.communication.rabbit;
 
-import eu.h2020.symbiote.cloud.model.internal.FederatedCloudResource;
-import eu.h2020.symbiote.model.cim.Resource;
-import eu.h2020.symbiote.pr.model.NewResourcesMessage;
+import eu.h2020.symbiote.pr.model.ResourcesAddedOrUpdatedMessage;
 import eu.h2020.symbiote.pr.model.ResourcesDeletedMessage;
 import eu.h2020.symbiote.pr.services.ResourceService;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
@@ -14,9 +12,6 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Vasileios Glykantzis (ICOM)
@@ -35,12 +30,12 @@ public class SubscriptionManagerListener {
 
     /**
      * Spring AMQP Listener for listening to new FederationResources updates from Subscription Manager.
-     * @param newFederatedResources message received from Subscription Manager
+     * @param resourcesAddedOrUpdated message received from Subscription Manager
      */
     @RabbitListener(
             bindings = @QueueBinding(
                     value = @Queue(
-                            value = "${rabbit.queueName.platformRegistry.smAddOrUpdateResources}",
+                            value = "${rabbit.queueName.platformRegistry.addOrUpdateResources}",
                             durable = "${rabbit.exchange.platformRegistry.durable}",
                             autoDelete = "${rabbit.exchange.platformRegistry.autodelete}"
                             , exclusive = "false"),
@@ -51,15 +46,15 @@ public class SubscriptionManagerListener {
                             autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
                             internal = "${rabbit.exchange.platformRegistry.internal}",
                             type = "${rabbit.exchange.platformRegistry.type}"),
-                    key = "${rabbit.routingKey.platformRegistry.smAddOrUpdateResources}")
+                    key = "${rabbit.routingKey.platformRegistry.addOrUpdateResources}")
     )
-    public void addOrUpdateResources(NewResourcesMessage newFederatedResources) {
+    public void addOrUpdateResources(ResourcesAddedOrUpdatedMessage resourcesAddedOrUpdated) {
         log.trace("Received new federated resources from Subscription Manager: " +
-                ReflectionToStringBuilder.toString(newFederatedResources));
+                ReflectionToStringBuilder.toString(resourcesAddedOrUpdated));
 
         // ToDo: rework this to return proper error messages and/or do not requeue the request
         try {
-            resourceService.saveFederationResources(newFederatedResources);
+            resourceService.addOrUpdateFederationResources(resourcesAddedOrUpdated);
         } catch (Exception e) {
             log.info("Exception thrown during saving federated resources", e);
         }
@@ -68,7 +63,7 @@ public class SubscriptionManagerListener {
     @RabbitListener(
             bindings = @QueueBinding(
                     value = @Queue(
-                            value = "${rabbit.queueName.platformRegistry.smRemoveResources}",
+                            value = "${rabbit.queueName.platformRegistry.removeResources}",
                             durable = "${rabbit.exchange.platformRegistry.durable}",
                             autoDelete = "${rabbit.exchange.platformRegistry.autodelete}",
                             exclusive = "false"),
@@ -79,7 +74,7 @@ public class SubscriptionManagerListener {
                             autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
                             internal = "${rabbit.exchange.platformRegistry.internal}",
                             type = "${rabbit.exchange.platformRegistry.type}"),
-                    key = "${rabbit.routingKey.platformRegistry.smRemoveResources}")
+                    key = "${rabbit.routingKey.platformRegistry.removeResources}")
     )
     public void deleteResources(ResourcesDeletedMessage resourcesDeleted) {
         log.trace("Received message from Subscription Manager to remove resources: " +

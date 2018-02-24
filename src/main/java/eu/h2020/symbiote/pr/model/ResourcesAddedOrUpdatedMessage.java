@@ -9,11 +9,11 @@ import java.util.List;
  * @author Vasileios Glykantzis (ICOM)
  * @since 2/21/2018.
  */
-public class NewResourcesMessage {
+public class ResourcesAddedOrUpdatedMessage {
     private List<FederatedResource> newFederatedResources;
 
     @JsonCreator
-    public NewResourcesMessage(@JsonProperty(value = "newFederatedResources") List<FederatedResource> newFederatedResources) {
+    public ResourcesAddedOrUpdatedMessage(@JsonProperty(value = "newFederatedResources") List<FederatedResource> newFederatedResources) {
         this.newFederatedResources = newFederatedResources;
     }
 

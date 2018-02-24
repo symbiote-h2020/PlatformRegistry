@@ -7,6 +7,7 @@ import eu.h2020.symbiote.model.cim.MobileSensor;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.cim.StationarySensor;
 import eu.h2020.symbiote.pr.model.FederatedResource;
+import eu.h2020.symbiote.pr.model.ResourcesAddedOrUpdatedMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
@@ -28,42 +29,54 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
     private static Log log = LogFactory.getLog(RegistrationHandlerListenerTests.class);
 
     @Test
-    public void registerResourcesTest() {
+    public void registerResourcesTest() throws InterruptedException {
 
         List<FederatedCloudResource> federatedCloudResources = createFederatedCloudResourceMessage();
         Map<String, Map<String,String>> result = (Map<String, Map<String,String>>) rabbitTemplate
-                .convertSendAndReceive(platformRegistryExchange, rhRegistrationRequestKey, federatedCloudResources);
+                .convertSendAndReceive(platformRegistryExchange, registrationRequestKey, federatedCloudResources);
 
         // Testing the RegistrationHandlerListener response
         assertEquals(2, result.get("sensor1InternalId").size());
         assertEquals(1, result.get("sensor2InternalId").size());
 
         // Checking what is stored in the database
+        String expectedResourceId1 = createNewResourceId(0);
+        String expectedResourceId2 = createNewResourceId(1);
+        String expectedResourceId3 = createNewResourceId(2);
+
         List<FederatedResource> stored = resourceRepository.findAll();
         assertEquals(3, stored.size());
 
-        // Get the current sequenceId and remove the number of the registered federatedCloudResources to get the first
-        // id of the newly created resources. That is because we created new resources by calling createFederatedCloudResourceMessage.
-        // We do that because idSequence is used by previous tests too, so its initial value might not be 0
-        long initialId = (Long) idSequence.getValue() - stored.size();
-
-        Resource resource1 = resourceRepository.findOne(createNewResourceId(initialId)).getResource();
+        Resource resource1 = resourceRepository.findOne(expectedResourceId1).getResource();
         assertTrue(resource1 instanceof StationarySensor);
 
-        Resource resource2 = resourceRepository.findOne(createNewResourceId(initialId + 1)).getResource();
+        Resource resource2 = resourceRepository.findOne(expectedResourceId2).getResource();
         assertTrue(resource2 instanceof StationarySensor);
         assertTrue(resource1.getBartered() != resource2.getBartered());
         assertEquals("stationarySensor", resource1.getName());
         assertEquals(resource1.getName(), resource2.getName());
 
-        Resource resource3 = resourceRepository.findOne(createNewResourceId(initialId + 2)).getResource();
+        Resource resource3 = resourceRepository.findOne(expectedResourceId3).getResource();
         assertTrue(resource3 instanceof MobileSensor);
         assertTrue(resource3.getBartered());
         assertEquals("mobileSensor", resource3.getName());
+
+        // Check what dummySubscriptionManagerListener received
+        while (dummySubscriptionManagerListener.getResourcesAddedOrUpdatedMessages().size() == 0)
+            TimeUnit.MILLISECONDS.sleep(100);
+
+        assertEquals(1, dummySubscriptionManagerListener.getResourcesAddedOrUpdatedMessages().size());
+        List<FederatedResource> message = dummySubscriptionManagerListener
+                .getResourcesAddedOrUpdatedMessages().get(0).getNewFederatedResources();
+
+        assertEquals(3, message.size());
+        assertEquals(expectedResourceId1, message.get(0).getId());
+        assertEquals(expectedResourceId2, message.get(1).getId());
+        assertEquals(expectedResourceId3, message.get(2).getId());
     }
 
     @Test
-    public void updateResourcesTest() {
+    public void updateResourcesTest() throws InterruptedException {
 
         List<FederatedResource> federatedResources = createTestFederatedResources(platformId);
         resourceRepository.save(federatedResources);
@@ -84,7 +97,7 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
                 .collect(Collectors.toList());
 
         List<String> updateResult = (List<String>) rabbitTemplate
-                .convertSendAndReceive(platformRegistryExchange, rhUpdateRequestKey, cloudResources);
+                .convertSendAndReceive(platformRegistryExchange, updateRequestKey, cloudResources);
 
         // Only the 2nd resource should be updated
         assertEquals(1, updateResult.size());
@@ -98,6 +111,19 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         assertFalse(stationarySensor.getResource().getName().equals(newName));
         assertTrue(mobileSensor.getResource().getName().equals(newName));
         assertFalse(service.getResource().getName().equals(newName));
+
+        // Check what dummySubscriptionManagerListener received
+        while (dummySubscriptionManagerListener.getResourcesAddedOrUpdatedMessages().size() == 0)
+            TimeUnit.MILLISECONDS.sleep(100);
+
+        String expectedResourceId = federatedResources.get(1).getResource().getId();
+
+        assertEquals(1, dummySubscriptionManagerListener.getResourcesAddedOrUpdatedMessages().size());
+        List<FederatedResource> message = dummySubscriptionManagerListener
+                .getResourcesAddedOrUpdatedMessages().get(0).getNewFederatedResources();
+
+        assertEquals(1, message.size());
+        assertEquals(expectedResourceId, message.get(0).getId());
     }
 
     @Test
@@ -106,20 +132,34 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         List<FederatedResource> federatedResources = createTestFederatedResources(platformId);
         resourceRepository.save(federatedResources);
 
+        // We delete the 1st and 3rd resource
         List<String> resourceIds = new ArrayList<>();
         resourceIds.add(federatedResources.get(0).getId());
         resourceIds.add(federatedResources.get(2).getId());
 
         List<String> removalResult = (List<String>) rabbitTemplate
-                .convertSendAndReceive(platformRegistryExchange, rhRemovalRequestKey, resourceIds);
+                .convertSendAndReceive(platformRegistryExchange, removalRequestKey, resourceIds);
 
-        // Sleep to make sure that the repo has been updated before querying
-        TimeUnit.MILLISECONDS.sleep(500);
-
+        // Check what is stored in the database
         List<FederatedResource> stored = resourceRepository.findAll();
         assertEquals(1, stored.size());
         assertEquals(federatedResources.get(1).getId(), stored.get(0).getResource().getId());
         assertEquals(2, removalResult.size());
         assertTrue(removalResult.containsAll(resourceIds));
+
+        // Check what dummySubscriptionManagerListener received
+        while (dummySubscriptionManagerListener.getResourcesDeletedMessages().size() == 0)
+            TimeUnit.MILLISECONDS.sleep(100);
+
+        String expectedResourceId1 = federatedResources.get(0).getResource().getId();
+        String expectedResourceId2 = federatedResources.get(2).getResource().getId();
+
+        assertEquals(1, dummySubscriptionManagerListener.getResourcesDeletedMessages().size());
+        List<String> message = dummySubscriptionManagerListener
+                .getResourcesDeletedMessages().get(0).getDeletedIds();
+
+        assertEquals(2, message.size());
+        assertEquals(expectedResourceId1, message.get(0));
+        assertEquals(expectedResourceId2, message.get(1));
     }
 }
