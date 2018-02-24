@@ -1,10 +1,12 @@
 package eu.h2020.symbiote.pr;
 
+import eu.h2020.symbiote.pr.model.FederatedResource;
 import eu.h2020.symbiote.security.commons.SecurityConstants;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.contains;
@@ -44,21 +46,22 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
 
     @Test
     public void listResourcesSuccessfulTest() throws Exception {
-        saveResourceToRepo();
+        List<FederatedResource> federatedResourceList = createTestFederatedResources(platformId);
+        resourceRepository.save(federatedResourceList);
 
         String stationarySensorODataUrl = "https://stationarySensor.com/rap/Sensors('"
-                + createNewResourceId(0, "platform1") + "')";
+                + federatedResourceList.get(0).getId() + "')";
         String actuatorODataUrl = "https://actuator.com/rap/Actuators('"
-                + createNewResourceId(1, "platform1") + "')";
+                + federatedResourceList.get(1).getId() + "')";
         String serviceODataUrl = "https://service.com/rap/Services('"
-                + createNewResourceId(2, "platform1") + "')";
+                + federatedResourceList.get(2).getId() + "')";
 
         String stationarySensorRestUrl = "https://stationarySensor.com/rap/Sensor/"
-                + createNewResourceId(0, "platform1");
+                + federatedResourceList.get(0).getId();
         String actuatorRestUrl = "https://actuator.com/rap/Actuator/"
-                + createNewResourceId(1, "platform1");
+                + federatedResourceList.get(1).getId();
         String serviceRestUrl = "https://service.com/rap/Service/"
-                + createNewResourceId(2, "platform1");
+                + federatedResourceList.get(2).getId();
 
         // Sleep to make sure that the repo has been updated before querying
         TimeUnit.MILLISECONDS.sleep(500);
@@ -74,34 +77,38 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
                 .andExpect(jsonPath("$.resources", hasSize(3)))
                 .andExpect(jsonPath("$.resources[*].resource.id",
                         contains(
-                                createNewResourceId(0, "platform1"),
-                                createNewResourceId(1, "platform1"),
-                                createNewResourceId(2, "platform1"))))
+                                federatedResourceList.get(0).getId(),
+                                federatedResourceList.get(1).getId(),
+                                federatedResourceList.get(2).getId()
+                        )))
                 .andExpect(jsonPath("$.resources[*].oDataUrl",
                         contains(
                                 stationarySensorODataUrl,
                                 actuatorODataUrl,
-                                serviceODataUrl)))
+                                serviceODataUrl
+                        )))
                 .andExpect(jsonPath("$.resources[*].restUrl",
                         contains(
                                 stationarySensorRestUrl,
                                 actuatorRestUrl,
-                                serviceRestUrl)));
+                                serviceRestUrl
+                        )));
     }
 
     @Test
     public void listResourcesInFederationSuccessfulTest() throws Exception {
-        saveResourceToRepo();
+        List<FederatedResource> federatedResourceList = createTestFederatedResources(platformId);
+        resourceRepository.save(federatedResourceList);
 
         String stationarySensorODataUrl = "https://stationarySensor.com/rap/Sensors('"
-                + createNewResourceId(0, "platform1") + "')";
+                + federatedResourceList.get(0).getId() + "')";
         String serviceODataUrl = "https://service.com/rap/Services('"
-                + createNewResourceId(2, "platform1") + "')";
+                + federatedResourceList.get(2).getId() + "')";
 
         String stationarySensorRestUrl = "https://stationarySensor.com/rap/Sensor/"
-                + createNewResourceId(0, "platform1");
+                + federatedResourceList.get(0).getId();
         String serviceRestUrl = "https://service.com/rap/Service/"
-                + createNewResourceId(2, "platform1");
+                + federatedResourceList.get(2).getId();
 
         // Sleep to make sure that the repo has been updated before querying
         TimeUnit.MILLISECONDS.sleep(500);
@@ -117,15 +124,18 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
                 .andExpect(jsonPath("$.resources", hasSize(2)))
                 .andExpect(jsonPath("$.resources[*].resource.id",
                         contains(
-                                createNewResourceId(0, "platform1"),
-                                createNewResourceId(2, "platform1"))))
+                                federatedResourceList.get(0).getId(),
+                                federatedResourceList.get(2).getId()
+                        )))
                 .andExpect(jsonPath("$.resources[*].oDataUrl",
                         contains(
                                 stationarySensorODataUrl,
-                                serviceODataUrl)))
+                                serviceODataUrl
+                        )))
                 .andExpect(jsonPath("$.resources[*].restUrl",
                         contains(
                                 stationarySensorRestUrl,
-                                serviceRestUrl)));
+                                serviceRestUrl)
+                ));
     }
 }

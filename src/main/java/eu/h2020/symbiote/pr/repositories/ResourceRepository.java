@@ -12,6 +12,10 @@ import java.util.List;
  */
 @RepositoryRestResource(collectionResourceRel = "resources", path = "resources")
 public interface ResourceRepository extends MongoRepository<FederatedResource, String> {
+    // ToDo: consider some optimized query here
+    List<FederatedResource> findAllByIdIn(List<String> ids);
+
     List<FederatedResource> findByResourceFederationId(String federationId);
+
     List<FederatedResource> deleteAllByIdIn(List<String> ids);
 }

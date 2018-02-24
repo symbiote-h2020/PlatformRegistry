@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.pr.communication.rabbit;
 
+import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.cloud.model.internal.FederatedCloudResource;
 import eu.h2020.symbiote.pr.services.ResourceService;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
@@ -66,6 +67,42 @@ public class RegistrationHandlerListener {
         }
 
         return new HashMap<>();
+    }
+
+    /**
+     * Spring AMQP Listener for Resource Update requests from Registration Handler.
+     *
+     * @param updatedResourceIds the federatedIds of the updated resources
+     * @return a map containing the internalIds and the federationIds inside each federation
+     */
+    @RabbitListener(
+            bindings = @QueueBinding(
+                    value = @Queue(
+                            value = "${rabbit.queueName.platformRegistry.rhUpdateRequest}",
+                            durable = "${rabbit.exchange.platformRegistry.durable}",
+                            autoDelete = "${rabbit.exchange.platformRegistry.autodelete}",
+                            exclusive = "false"),
+                    exchange = @Exchange(
+                            value = "${rabbit.exchange.platformRegistry.name}",
+                            ignoreDeclarationExceptions = "true",
+                            durable = "${rabbit.exchange.platformRegistry.durable}",
+                            autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
+                            internal = "${rabbit.exchange.platformRegistry.internal}",
+                            type = "${rabbit.exchange.platformRegistry.type}"),
+                    key = "${rabbit.routingKey.platformRegistry.rhUpdateRequest}")
+    )
+    public List<String> updateResources(List<CloudResource> updatedResourceIds) {
+        log.trace("Received resource update request from registration Handler: " +
+                ReflectionToStringBuilder.toString(updatedResourceIds));
+
+        // ToDo: rework this to return proper error messages and/or do not requeue the request
+        try {
+            return resourceService.updatePlatformResources(updatedResourceIds);
+        } catch (Exception e) {
+            log.info("Exception thrown during updating platform resources", e);
+        }
+
+        return new ArrayList<>();
     }
 
     /**

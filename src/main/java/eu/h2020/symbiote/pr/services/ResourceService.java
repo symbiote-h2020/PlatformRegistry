@@ -2,6 +2,7 @@ package eu.h2020.symbiote.pr.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.cloud.model.internal.FederatedCloudResource;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.pr.model.FederatedResource;
@@ -94,13 +95,61 @@ public class ResourceService {
         persistentVariableRepository.save(idSequence);
 
         // Todo: inform Subscription Manager for the new Resources
+
         return internalIdResourceIdMap;
     }
 
+    /**
+     * Update the federated resources offered by the platform
+     * @param cloudResources update message sent by Registration Handler
+     * @return response to Registration Handler containing the federatedIds of the updated resources
+     */
+    public List<String> updatePlatformResources(List<CloudResource> cloudResources) {
+        log.trace("updatePlatformResources: " + ReflectionToStringBuilder.toString(cloudResources));
+
+        // We filter out any resources with id == null
+        List<String> validResourceIds = new LinkedList<>();
+        for (CloudResource cloudResource : cloudResources) {
+            if (cloudResource.getResource().getId() != null)
+                validResourceIds.add(cloudResource.getResource().getId());
+        }
+
+        // Then, we find out which of these resources actually exist
+        List<String> existingResourceIds = resourceRepository.findAllByIdIn(validResourceIds).stream()
+                .map(FederatedResource::getId)
+                .collect(Collectors.toList());
+
+        List<FederatedResource> bill = resourceRepository.findAll();
+        List<FederatedResource> bill2 = resourceRepository.findAllByIdIn(validResourceIds);
+
+        // We keep only the existing resources. Only, these will be updated
+        List<CloudResource> existingResources = cloudResources.stream()
+                .filter(resource -> existingResourceIds.contains(resource.getResource().getId()))
+                .collect(Collectors.toList());
+
+        // Create the list of federatedResources in order to update the database
+        List<FederatedResource> resourcesToUpdate = existingResources.stream()
+                .map(resource -> new FederatedResource(resource.getResource()))
+                .collect(Collectors.toList());
+
+        resourceRepository.save(resourcesToUpdate);
+
+        // Todo: inform Subscription Manager for the new Resources
+
+        // We return only the resources which were updated
+        return existingResourceIds;
+    }
+
+    /**
+     * Remove federated resources offered by the platform by using their federationIds
+     * @param resourceIds the ids of the federated platform resources to be removed
+     * @return the list of the removed resources
+     */
     public List<String> removePlatformResources(List<String> resourceIds) {
         log.trace("removeResources: " + ReflectionToStringBuilder.toString(resourceIds));
 
         // Todo: maybe check if these are platform resources
+
         return resourceIds != null ?
                 resourceRepository.deleteAllByIdIn(resourceIds)
                         .stream().map(resource -> resource.getResource().getId()).collect(Collectors.toList()) :
