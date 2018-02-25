@@ -1,7 +1,7 @@
 package eu.h2020.symbiote.pr.communication.rabbit;
 
-import eu.h2020.symbiote.pr.model.ResourcesAddedOrUpdatedMessage;
-import eu.h2020.symbiote.pr.model.ResourcesDeletedMessage;
+import eu.h2020.symbiote.cloud.model.internal.ResourcesAddedOrUpdatedMessage;
+import eu.h2020.symbiote.cloud.model.internal.ResourcesDeletedMessage;
 import eu.h2020.symbiote.pr.services.ResourceService;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;

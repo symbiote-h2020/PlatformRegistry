@@ -1,6 +1,6 @@
 package eu.h2020.symbiote.pr;
 
-import eu.h2020.symbiote.pr.model.FederatedResource;
+import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
 import eu.h2020.symbiote.security.commons.SecurityConstants;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;

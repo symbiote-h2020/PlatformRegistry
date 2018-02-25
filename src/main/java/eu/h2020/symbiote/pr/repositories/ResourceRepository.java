@@ -1,6 +1,6 @@
 package eu.h2020.symbiote.pr.repositories;
 
-import eu.h2020.symbiote.pr.model.FederatedResource;
+import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 

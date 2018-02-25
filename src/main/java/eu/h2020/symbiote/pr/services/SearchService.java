@@ -1,8 +1,8 @@
 package eu.h2020.symbiote.pr.services;
 
+import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
+import eu.h2020.symbiote.cloud.model.internal.FederationSearchResult;
 import eu.h2020.symbiote.pr.helpers.AuthorizationServiceHelper;
-import eu.h2020.symbiote.pr.model.FederatedResource;
-import eu.h2020.symbiote.pr.model.FederationSearchResult;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

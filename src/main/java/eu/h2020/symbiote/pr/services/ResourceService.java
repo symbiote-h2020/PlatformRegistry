@@ -2,13 +2,9 @@ package eu.h2020.symbiote.pr.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import eu.h2020.symbiote.cloud.model.internal.CloudResource;
-import eu.h2020.symbiote.cloud.model.internal.FederatedCloudResource;
+import eu.h2020.symbiote.cloud.model.internal.*;
 import eu.h2020.symbiote.model.cim.Resource;
-import eu.h2020.symbiote.pr.model.FederatedResource;
-import eu.h2020.symbiote.pr.model.ResourcesAddedOrUpdatedMessage;
 import eu.h2020.symbiote.pr.model.PersistentVariable;
-import eu.h2020.symbiote.pr.model.ResourcesDeletedMessage;
 import eu.h2020.symbiote.pr.repositories.PersistentVariableRepository;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import io.jsonwebtoken.lang.Assert;

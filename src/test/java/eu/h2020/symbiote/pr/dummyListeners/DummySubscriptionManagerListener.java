@@ -1,9 +1,7 @@
 package eu.h2020.symbiote.pr.dummyListeners;
 
-import eu.h2020.symbiote.pr.communication.rabbit.SubscriptionManagerListener;
-import eu.h2020.symbiote.pr.model.ResourcesAddedOrUpdatedMessage;
-import eu.h2020.symbiote.pr.model.ResourcesDeletedMessage;
-import org.apache.commons.lang.builder.ReflectionToStringBuilder;
+import eu.h2020.symbiote.cloud.model.internal.ResourcesAddedOrUpdatedMessage;
+import eu.h2020.symbiote.cloud.model.internal.ResourcesDeletedMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.amqp.rabbit.annotation.Exchange;

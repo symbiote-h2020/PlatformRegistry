@@ -2,9 +2,9 @@ package eu.h2020.symbiote.pr;
 
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.cloud.model.internal.FederatedCloudResource;
+import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
 import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.pr.dummyListeners.DummySubscriptionManagerListener;
-import eu.h2020.symbiote.pr.model.FederatedResource;
 import eu.h2020.symbiote.pr.model.PersistentVariable;
 import eu.h2020.symbiote.pr.repositories.PersistentVariableRepository;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;

@@ -2,12 +2,10 @@ package eu.h2020.symbiote.pr;
 
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.cloud.model.internal.FederatedCloudResource;
-import eu.h2020.symbiote.model.cim.Actuator;
+import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
 import eu.h2020.symbiote.model.cim.MobileSensor;
 import eu.h2020.symbiote.model.cim.Resource;
 import eu.h2020.symbiote.model.cim.StationarySensor;
-import eu.h2020.symbiote.pr.model.FederatedResource;
-import eu.h2020.symbiote.pr.model.ResourcesAddedOrUpdatedMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
