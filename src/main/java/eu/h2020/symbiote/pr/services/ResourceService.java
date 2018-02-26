@@ -93,9 +93,7 @@ public class ResourceService {
 
                 if (newResource != null) {
                     newResource.setId(createNewResourceId(id));
-                    newResource.setFederationId(federationId);
-                    newResource.setBartered(isBartered);
-                    resourcesToSave.add(new FederatedResource(newResource));
+                    resourcesToSave.add(new FederatedResource(newResource, federationId, isBartered));
                     federationResourceIdMap.put(federationId, newResource.getId());
                     id++;
                 }
@@ -132,21 +130,26 @@ public class ResourceService {
         }
 
         // Then, we find out which of these resources actually exist
-        List<String> existingResourceIds = resourceRepository.findAllByIdIn(validResourceIds).stream()
-                .map(FederatedResource::getId)
-                .collect(Collectors.toList());
+        List<FederatedResource> existingResources = resourceRepository.findAllByIdIn(validResourceIds);
 
-        List<FederatedResource> bill = resourceRepository.findAll();
-        List<FederatedResource> bill2 = resourceRepository.findAllByIdIn(validResourceIds);
+        // Create a map for quick searching
+        Map<String, FederatedResource> existingResourcesMap = new HashMap<>();
+        for (FederatedResource existingResource : existingResources) {
+            existingResourcesMap.put(existingResource.getFederationId(), existingResource);
+        }
 
         // We keep only the existing resources. Only, these will be updated
-        List<CloudResource> existingResources = cloudResources.stream()
-                .filter(resource -> existingResourceIds.contains(resource.getResource().getId()))
+        List<CloudResource> filteredCloudResources = cloudResources.stream()
+                .filter(resource -> existingResourcesMap.containsKey(resource.getResource().getId()))
                 .collect(Collectors.toList());
 
         // Create the list of federatedResources in order to update the database
-        List<FederatedResource> resourcesToUpdate = existingResources.stream()
-                .map(resource -> new FederatedResource(resource.getResource()))
+        List<FederatedResource> resourcesToUpdate = filteredCloudResources.stream()
+                .map(resource -> {
+                    FederatedResource storedResource = existingResourcesMap.get(resource.getResource().getId());
+                    return new FederatedResource(storedResource.getResource(),
+                            storedResource.getFederationId(), storedResource.getBartered());
+                })
                 .collect(Collectors.toList());
 
         resourceRepository.save(resourcesToUpdate);
@@ -156,7 +159,7 @@ public class ResourceService {
                 new ResourcesAddedOrUpdatedMessage(resourcesToUpdate));
 
         // We return only the resources which were updated
-        return existingResourceIds;
+        return new ArrayList<>(existingResourcesMap.keySet());
     }
 
     /**
@@ -203,7 +206,7 @@ public class ResourceService {
     }
 
     private String serializeResource(Resource resource) {
-        String string = null;
+        String string;
 
         try {
             string = mapper.writeValueAsString(resource);

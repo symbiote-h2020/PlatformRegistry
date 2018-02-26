@@ -146,9 +146,12 @@ public abstract class PlatformRegistryBaseTestClass {
     }
 
     public List<FederatedResource> createTestFederatedResources(String platform) {
-        return createTestResources(platform).stream()
-                .map(FederatedResource::new)
-                .collect(Collectors.toList());
+        List<Resource> resources = createTestResources(platform);
+        List<FederatedResource> federatedResources = new ArrayList<>();
+        federatedResources.add(new FederatedResource(resources.get(0), "fed1", true));
+        federatedResources.add(new FederatedResource(resources.get(1), "fed2", false));
+        federatedResources.add(new FederatedResource(resources.get(2), "fed1", true));
+        return federatedResources;
     }
 
     public List<CloudResource> createTestCloudResources(String platform) {
@@ -172,7 +175,6 @@ public abstract class PlatformRegistryBaseTestClass {
         stationarySensor.setDescription(Collections.singletonList("sensor1Description"));
         stationarySensor.setInterworkingServiceURL("https://stationarySensor.com");
         stationarySensor.setObservesProperty(Arrays.asList("property1", "property2"));
-        stationarySensor.setFederationId("fed1");
         resources.add(stationarySensor);
 
         // Create 2nd resource
@@ -180,7 +182,6 @@ public abstract class PlatformRegistryBaseTestClass {
         actuator.setId(createNewResourceId(1, platform));
         actuator.setName("actuator");
         actuator.setInterworkingServiceURL("https://actuator.com");
-        actuator.setFederationId("fed2");
         resources.add(actuator);
 
         // Create 3rd resource
@@ -188,7 +189,6 @@ public abstract class PlatformRegistryBaseTestClass {
         service.setId(createNewResourceId(2, platform));
         service.setName("service");
         service.setInterworkingServiceURL("https://service.com");
-        service.setFederationId("fed1");
         resources.add(service);
 
         return resources;

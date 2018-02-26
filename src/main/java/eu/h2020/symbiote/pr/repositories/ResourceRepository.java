@@ -15,7 +15,7 @@ public interface ResourceRepository extends MongoRepository<FederatedResource, S
     // ToDo: consider some optimized query here
     List<FederatedResource> findAllByIdIn(List<String> ids);
 
-    List<FederatedResource> findByResourceFederationId(String federationId);
+    List<FederatedResource> findByFederationId(String federationId);
 
     List<FederatedResource> deleteAllByIdIn(List<String> ids);
 }

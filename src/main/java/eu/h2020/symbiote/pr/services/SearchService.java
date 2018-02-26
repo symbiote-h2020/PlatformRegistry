@@ -58,7 +58,7 @@ public class SearchService {
         if (securityChecks.getStatusCode() != HttpStatus.OK)
             return securityChecks;
 
-        List<FederatedResource> resources = resourceRepository.findByResourceFederationId(federationId);
+        List<FederatedResource> resources = resourceRepository.findByFederationId(federationId);
         FederationSearchResult response = new FederationSearchResult();
 
         for (FederatedResource federatedResource : resources) {
