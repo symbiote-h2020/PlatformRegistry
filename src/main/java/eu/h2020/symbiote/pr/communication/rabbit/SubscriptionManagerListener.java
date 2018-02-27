@@ -35,10 +35,10 @@ public class SubscriptionManagerListener {
     @RabbitListener(
             bindings = @QueueBinding(
                     value = @Queue(
-                            value = "${rabbit.queueName.platformRegistry.addOrUpdateResources}",
+                            value = "${rabbit.queueName.platformRegistry.addOrUpdateFederatedResources}",
                             durable = "${rabbit.exchange.platformRegistry.durable}",
-                            autoDelete = "${rabbit.exchange.platformRegistry.autodelete}"
-                            , exclusive = "false"),
+                            autoDelete = "${rabbit.exchange.platformRegistry.autodelete}",
+                            exclusive = "false"),
                     exchange = @Exchange(
                             value = "${rabbit.exchange.platformRegistry.name}",
                             ignoreDeclarationExceptions = "true",
@@ -46,9 +46,9 @@ public class SubscriptionManagerListener {
                             autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
                             internal = "${rabbit.exchange.platformRegistry.internal}",
                             type = "${rabbit.exchange.platformRegistry.type}"),
-                    key = "${rabbit.routingKey.platformRegistry.addOrUpdateResources}")
+                    key = "${rabbit.routingKey.platformRegistry.addOrUpdateFederatedResources}")
     )
-    public void addOrUpdateResources(ResourcesAddedOrUpdatedMessage resourcesAddedOrUpdated) {
+    public void addOrUpdateFederatedResources(ResourcesAddedOrUpdatedMessage resourcesAddedOrUpdated) {
         log.trace("Received new federated resources from Subscription Manager: " +
                 ReflectionToStringBuilder.toString(resourcesAddedOrUpdated));
 
@@ -63,7 +63,7 @@ public class SubscriptionManagerListener {
     @RabbitListener(
             bindings = @QueueBinding(
                     value = @Queue(
-                            value = "${rabbit.queueName.platformRegistry.removeResources}",
+                            value = "${rabbit.queueName.platformRegistry.removeFederatedResources}",
                             durable = "${rabbit.exchange.platformRegistry.durable}",
                             autoDelete = "${rabbit.exchange.platformRegistry.autodelete}",
                             exclusive = "false"),
@@ -74,7 +74,7 @@ public class SubscriptionManagerListener {
                             autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
                             internal = "${rabbit.exchange.platformRegistry.internal}",
                             type = "${rabbit.exchange.platformRegistry.type}"),
-                    key = "${rabbit.routingKey.platformRegistry.removeResources}")
+                    key = "${rabbit.routingKey.platformRegistry.removeFederatedResources}")
     )
     public void deleteResources(ResourcesDeletedMessage resourcesDeleted) {
         log.trace("Received message from Subscription Manager to remove resources: " +

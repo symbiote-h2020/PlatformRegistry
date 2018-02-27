@@ -1,11 +1,14 @@
 package eu.h2020.symbiote.pr;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.cloud.model.internal.FederatedCloudResource;
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
+import eu.h2020.symbiote.cloud.model.internal.ResourceSharingInformation;
 import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.pr.dummyListeners.DummySubscriptionManagerListener;
 import eu.h2020.symbiote.pr.model.PersistentVariable;
+import eu.h2020.symbiote.pr.repositories.CloudResourceRepository;
 import eu.h2020.symbiote.pr.repositories.PersistentVariableRepository;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import eu.h2020.symbiote.pr.services.AuthorizationService;
@@ -43,6 +46,9 @@ public abstract class PlatformRegistryBaseTestClass {
     protected AuthorizationService authorizationService;
 
     @Autowired
+    protected CloudResourceRepository cloudResourceRepository;
+
+    @Autowired
     protected ResourceRepository resourceRepository;
 
     @Autowired
@@ -63,28 +69,34 @@ public abstract class PlatformRegistryBaseTestClass {
     @Value("${rabbit.exchange.platformRegistry.name}")
     protected String platformRegistryExchange;
 
-    @Value("${rabbit.routingKey.platformRegistry.registrationRequest}")
-    protected String registrationRequestKey;
-
-    @Value("${rabbit.routingKey.platformRegistry.updateRequest}")
-    protected String updateRequestKey;
+    @Value("${rabbit.routingKey.platformRegistry.addOrUpdateRequest}")
+    protected String addOrUpdateRequestKey;
 
     @Value("${rabbit.routingKey.platformRegistry.removalRequest}")
     protected String removalRequestKey;
 
-    @Value("${rabbit.routingKey.platformRegistry.addOrUpdateResources}")
-    protected String addOrUpdateResourcesKey;
+    @Value("${rabbit.routingKey.platformRegistry.addOrUpdateFederatedResources}")
+    protected String addOrUpdateFederatedResourcesKey;
 
-    @Value("${rabbit.routingKey.platformRegistry.removeResources}")
-    protected String removeResourcesKey;
+    @Value("${rabbit.routingKey.platformRegistry.removeFederatedResources}")
+    protected String removeFederatedResourcesKey;
 
     protected String serviceResponse = "testServiceResponse";
 
     // Used for SubscriptionManager tests
     protected String testPlatformId = "testPlatform";
 
+    protected String federation1 = "fed1";
+    protected String federation2 = "fed2";
+    protected String stationarySensorInternalId = "stationarySensorInternalId";
+    protected String actuatorInternalId = "actuatorInternalId";
+    protected String serviceInternalId = "serviceInternalId";
+
+    protected ObjectMapper mapper = new ObjectMapper();
+
     @Before
     public void setup() {
+        cloudResourceRepository.deleteAll();
         resourceRepository.deleteAll();
         persistentVariableRepository.deleteAll();
         dummySubscriptionManagerListener.clearLists();
@@ -94,6 +106,7 @@ public abstract class PlatformRegistryBaseTestClass {
 
     @After
     public void cleanup() {
+        cloudResourceRepository.deleteAll();
         resourceRepository.deleteAll();
         persistentVariableRepository.deleteAll();
     }
@@ -106,63 +119,65 @@ public abstract class PlatformRegistryBaseTestClass {
         return String.format("%0" + Long.BYTES * 2 + "x@%s", id, platformId);
     }
 
-    public List<FederatedCloudResource> createFederatedCloudResourceMessage() {
+    public List<CloudResource> createTestCloudResources() {
 
-        // Create 1st resource
-        StationarySensor stationarySensor = new StationarySensor();
-        stationarySensor.setName("stationarySensor");
-        stationarySensor.setDescription(Collections.singletonList("sensor1Description"));
-        stationarySensor.setInterworkingServiceURL("https://stationarySensor.com");
-        stationarySensor.setObservesProperty(Arrays.asList("property1", "property2"));
+        List<Resource> resources = createTestResources(platformId);
 
-        Map<String, Boolean> federationBarteringMap1 = new HashMap<>();
-        federationBarteringMap1.put("fed1", true);
-        federationBarteringMap1.put("fed2", false);
+        // Create 1st cloudResource
+        Map<String, ResourceSharingInformation> resourceSharingInformationMap1 = new HashMap<>();
+        ResourceSharingInformation sharingInformation1 = new ResourceSharingInformation();
+        sharingInformation1.setBartering(true);
+        resourceSharingInformationMap1.put(federation1, sharingInformation1);
+        ResourceSharingInformation sharingInformation2 = new ResourceSharingInformation();
+        sharingInformation2.setBartering(false);
+        resourceSharingInformationMap1.put(federation2, sharingInformation2);
 
-        FederatedCloudResource federatedCloudResource1 = new FederatedCloudResource();
-        federatedCloudResource1.setResource(stationarySensor);
-        federatedCloudResource1.setInternalId("sensor1InternalId");
-        federatedCloudResource1.setFederationBarteredResourceMap(federationBarteringMap1);
+        CloudResource cloudResource1 = new CloudResource();
+        cloudResource1.setResource(resources.get(0));
+        cloudResource1.setInternalId("stationarySensorInternalId");
+        cloudResource1.setFederationInfo(resourceSharingInformationMap1);
 
-        // Create 2nd resource
-        MobileSensor mobileSensor = new MobileSensor();
-        mobileSensor.setName("mobileSensor");
-        mobileSensor.setInterworkingServiceURL("https://mobileSensor.com");
+        // Create 2nd cloudResource
+        Map<String, ResourceSharingInformation> resourceSharingInformationMap2 = new HashMap<>();
+        ResourceSharingInformation sharingInformation3 = new ResourceSharingInformation();
+        sharingInformation3.setBartering(true);
+        resourceSharingInformationMap2.put(federation1, sharingInformation3);
 
-        Map<String, Boolean> federationBarteringMap2 = new HashMap<>();
-        federationBarteringMap2.put("fed1", true);
+        CloudResource cloudResource2 = new CloudResource();
+        cloudResource2.setResource(resources.get(1));
+        cloudResource2.setInternalId("actuatorInternalId");
+        cloudResource2.setFederationInfo(resourceSharingInformationMap2);
 
-        FederatedCloudResource federatedCloudResource2 = new FederatedCloudResource();
-        federatedCloudResource2.setResource(mobileSensor);
-        federatedCloudResource2.setInternalId("sensor2InternalId");
-        federatedCloudResource2.setFederationBarteredResourceMap(federationBarteringMap2);
+        // Create 3rd cloudResource
+        Map<String, ResourceSharingInformation> resourceSharingInformationMap3 = new HashMap<>();
+        ResourceSharingInformation sharingInformation4 = new ResourceSharingInformation();
+        sharingInformation4.setBartering(true);
+        resourceSharingInformationMap3.put(federation1, sharingInformation4);
+
+        CloudResource cloudResource3 = new CloudResource();
+        cloudResource3.setResource(resources.get(2));
+        cloudResource3.setInternalId("serviceInternalId");
+        cloudResource3.setFederationInfo(resourceSharingInformationMap3);
 
         // Create a registration request for a federatedCloudResource
-        List<FederatedCloudResource> federatedCloudResources = new ArrayList<>();
-        federatedCloudResources.add(federatedCloudResource1);
-        federatedCloudResources.add(federatedCloudResource2);
+        List<CloudResource> cloudResources = new ArrayList<>();
+        cloudResources.add(cloudResource1);
+        cloudResources.add(cloudResource2);
+        cloudResources.add(cloudResource3);
 
-        return federatedCloudResources;
+        return cloudResources;
     }
 
     public List<FederatedResource> createTestFederatedResources(String platform) {
         List<Resource> resources = createTestResources(platform);
         List<FederatedResource> federatedResources = new ArrayList<>();
-        federatedResources.add(new FederatedResource(resources.get(0), "fed1", true));
-        federatedResources.add(new FederatedResource(resources.get(1), "fed2", false));
-        federatedResources.add(new FederatedResource(resources.get(2), "fed1", true));
+        federatedResources.add(new FederatedResource(
+                resources.get(0), createNewResourceId(0, testPlatformId), federation1, true));
+        federatedResources.add(new FederatedResource(
+                resources.get(1), createNewResourceId(1, testPlatformId), federation2, false));
+        federatedResources.add(new FederatedResource(
+                resources.get(2), createNewResourceId(2, testPlatformId), federation1, true));
         return federatedResources;
-    }
-
-    public List<CloudResource> createTestCloudResources(String platform) {
-        return createTestResources(platform).stream()
-                .map(resource -> {
-                    CloudResource cloudResource = new CloudResource();
-                    cloudResource.setInternalId(resource.getName() + "Id");
-                    cloudResource.setResource(resource);
-                    return cloudResource;
-                })
-                .collect(Collectors.toList());
     }
 
     public List<Resource> createTestResources(String platform) {
@@ -170,7 +185,6 @@ public abstract class PlatformRegistryBaseTestClass {
 
         // Create 1st resource
         StationarySensor stationarySensor = new StationarySensor();
-        stationarySensor.setId(createNewResourceId(0, platform));
         stationarySensor.setName("stationarySensor");
         stationarySensor.setDescription(Collections.singletonList("sensor1Description"));
         stationarySensor.setInterworkingServiceURL("https://stationarySensor.com");
@@ -179,14 +193,12 @@ public abstract class PlatformRegistryBaseTestClass {
 
         // Create 2nd resource
         Actuator actuator = new Actuator();
-        actuator.setId(createNewResourceId(1, platform));
         actuator.setName("actuator");
         actuator.setInterworkingServiceURL("https://actuator.com");
         resources.add(actuator);
 
         // Create 3rd resource
         Service service = new Service();
-        service.setId(createNewResourceId(2, platform));
         service.setName("service");
         service.setInterworkingServiceURL("https://service.com");
         resources.add(service);

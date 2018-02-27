@@ -27,7 +27,7 @@ public class DummySubscriptionManagerListener {
     @RabbitListener(
             bindings = @QueueBinding(
                     value = @Queue(
-                            value = "${rabbit.queueName.subscriptionManager.addOrUpdateResources}",
+                            value = "${rabbit.queueName.subscriptionManager.addOrUpdateFederatedResources}",
                             durable = "${rabbit.exchange.subscriptionManager.durable}",
                             autoDelete = "${rabbit.exchange.subscriptionManager.autodelete}"
                             , exclusive = "false"),
@@ -38,9 +38,9 @@ public class DummySubscriptionManagerListener {
                             autoDelete  = "${rabbit.exchange.subscriptionManager.autodelete}",
                             internal = "${rabbit.exchange.subscriptionManager.internal}",
                             type = "${rabbit.exchange.subscriptionManager.type}"),
-                    key = "${rabbit.routingKey.subscriptionManager.addOrUpdateResources}")
+                    key = "${rabbit.routingKey.subscriptionManager.addOrUpdateFederatedResources}")
     )
-    public void addOrUpdateResources(ResourcesAddedOrUpdatedMessage newFederatedResources) {
+    public void addOrUpdateFederatedResources(ResourcesAddedOrUpdatedMessage newFederatedResources) {
         log.debug("Received ResourcesAddedOrUpdatedMessage from Platform Registry");
         resourcesAddedOrUpdatedMessages.add(newFederatedResources);
     }
@@ -48,7 +48,7 @@ public class DummySubscriptionManagerListener {
     @RabbitListener(
             bindings = @QueueBinding(
                     value = @Queue(
-                            value = "${rabbit.queueName.subscriptionManager.removeResources}",
+                            value = "${rabbit.queueName.subscriptionManager.removeFederatedResources}",
                             durable = "${rabbit.exchange.subscriptionManager.durable}",
                             autoDelete = "${rabbit.exchange.subscriptionManager.autodelete}",
                             exclusive = "false"),
@@ -59,7 +59,7 @@ public class DummySubscriptionManagerListener {
                             autoDelete  = "${rabbit.exchange.subscriptionManager.autodelete}",
                             internal = "${rabbit.exchange.subscriptionManager.internal}",
                             type = "${rabbit.exchange.subscriptionManager.type}"),
-                    key = "${rabbit.routingKey.subscriptionManager.removeResources}")
+                    key = "${rabbit.routingKey.subscriptionManager.removeFederatedResources}")
     )
     public void deleteResources(ResourcesDeletedMessage resourcesDeleted) {
         log.debug("Received ResourcesDeletedMessage from Platform Registry");

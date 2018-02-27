@@ -43,6 +43,8 @@ public class SearchService {
         FederationSearchResult response = new FederationSearchResult();
 
         for (FederatedResource federatedResource : resources) {
+            // Add the resource id here for backwards compatibility with L1
+            federatedResource.getResource().setId(federatedResource.getId());
             response.addFederationResourceResult(federatedResource);
         }
 
@@ -62,6 +64,8 @@ public class SearchService {
         FederationSearchResult response = new FederationSearchResult();
 
         for (FederatedResource federatedResource : resources) {
+            // Add the resource id here for backwards compatibility with L1
+            federatedResource.getResource().setId(federatedResource.getId());
             response.addFederationResourceResult(federatedResource);
         }
 

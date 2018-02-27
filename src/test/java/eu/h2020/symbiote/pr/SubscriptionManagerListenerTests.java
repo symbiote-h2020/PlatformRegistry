@@ -29,7 +29,7 @@ public class SubscriptionManagerListenerTests extends PlatformRegistryBaseTestCl
     @Test
     public void newResourcesTest() throws InterruptedException{
 
-        rabbitTemplate.convertAndSend(platformRegistryExchange, addOrUpdateResourcesKey,
+        rabbitTemplate.convertAndSend(platformRegistryExchange, addOrUpdateFederatedResourcesKey,
                 new ResourcesAddedOrUpdatedMessage(createTestFederatedResources(testPlatformId)));
 
         // Sleep to make sure that the platform has been updated in the repo before querying
@@ -61,13 +61,13 @@ public class SubscriptionManagerListenerTests extends PlatformRegistryBaseTestCl
                 createNewResourceId(1000, testPlatformId) // Does not exist
         ));
 
-        rabbitTemplate.convertAndSend(platformRegistryExchange, removeResourcesKey, deleteMessage);
+        rabbitTemplate.convertAndSend(platformRegistryExchange, removeFederatedResourcesKey, deleteMessage);
 
         // Sleep to make sure that the repo has been updated before querying
         TimeUnit.MILLISECONDS.sleep(500);
 
         List<FederatedResource> stored = resourceRepository.findAll();
         assertEquals(1, stored.size());
-        assertEquals(createNewResourceId(1, testPlatformId), stored.get(0).getResource().getId());
+        assertEquals(createNewResourceId(1, testPlatformId), stored.get(0).getId());
     }
 }
