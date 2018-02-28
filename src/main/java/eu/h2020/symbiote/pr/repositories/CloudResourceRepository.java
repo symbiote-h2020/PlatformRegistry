@@ -5,6 +5,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Vasileios Glykantzis (ICOM)
@@ -13,6 +14,7 @@ import java.util.List;
 @RepositoryRestResource(collectionResourceRel = "cloudResources", path = "cloudResources")
 public interface CloudResourceRepository extends MongoRepository<CloudResource, String> {
     List<CloudResource> findAllByInternalIdIn(List<String> internalIds);
+    List<CloudResource> findAllByInternalIdIn(Set<String> internalIds);
 
     List<CloudResource> deleteAllByInternalIdIn(List<String> internalIds);
 }

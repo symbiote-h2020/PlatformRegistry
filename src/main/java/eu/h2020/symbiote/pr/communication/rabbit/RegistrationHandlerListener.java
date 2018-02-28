@@ -59,7 +59,7 @@ public class RegistrationHandlerListener {
 
         // ToDo: rework this to return proper error messages and/or do not requeue the request
         try {
-            return resourceService.savePlatformResources(cloudResources);
+            return resourceService.addOrUpdatePlatformResources(cloudResources);
         } catch (Exception e) {
             log.info("Exception thrown during saving platform resources", e);
         }

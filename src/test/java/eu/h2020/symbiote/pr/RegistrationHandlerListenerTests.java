@@ -12,14 +12,12 @@ import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -35,18 +33,8 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
 
         // Register resources
         List<CloudResource> cloudResources = createTestCloudResources();
-        long initialId = (Long) idSequence.getValue();
-
-        List<CloudResource> result = null;
-        try {
-            String jsonArray = mapper.writeValueAsString(rabbitTemplate
-                    .convertSendAndReceive(platformRegistryExchange, addOrUpdateRequestKey, cloudResources));
-            CollectionType javaType = mapper.getTypeFactory()
-                    .constructCollectionType(List.class, CloudResource.class);
-            result = mapper.readValue(jsonArray, javaType);
-        } catch (IOException e) {
-            log.info("Problem deserializing registration request", e);
-        }
+        List<CloudResource> result = addOrUpdateResources(cloudResources);
+        assertNotNull(result);
 
         String expectedResourceId1 = result.get(0).getFederationInfo().get(federation1).getSymbioteId();
         String expectedResourceId2 = result.get(0).getFederationInfo().get(federation2).getSymbioteId();
@@ -104,18 +92,8 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
 
         // Register resources
         List<CloudResource> cloudResources = createTestCloudResources();
-
-        List<CloudResource> registrationResult = null;
-        try {
-            String jsonArray = mapper.writeValueAsString(rabbitTemplate
-                    .convertSendAndReceive(platformRegistryExchange, addOrUpdateRequestKey, cloudResources));
-            CollectionType javaType = mapper.getTypeFactory()
-                    .constructCollectionType(List.class, CloudResource.class);
-            registrationResult = mapper.readValue(jsonArray, javaType);
-        } catch (IOException e) {
-            log.info("Problem deserializing registration request", e);
-        }
-
+        List<CloudResource> registrationResult = addOrUpdateResources(cloudResources);
+        assertNotNull(registrationResult);
 
         String stationarySensorId1 = registrationResult.get(0).getFederationInfo().get(federation1).getSymbioteId();
         String stationarySensorId2 = registrationResult.get(0).getFederationInfo().get(federation2).getSymbioteId();
@@ -131,17 +109,8 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         registrationResult.get(1).getFederationInfo().put(federation2, new ResourceSharingInformation());
 
         // Send update message
-        List<CloudResource> updateResult = null;
-        try {
-            String jsonArray = mapper.writeValueAsString(rabbitTemplate
-                    .convertSendAndReceive(platformRegistryExchange, addOrUpdateRequestKey, registrationResult));
-            CollectionType javaType = mapper.getTypeFactory()
-                    .constructCollectionType(List.class, CloudResource.class);
-            updateResult = mapper.readValue(jsonArray, javaType);
-        } catch (IOException e) {
-            log.info("Problem deserializing update request", e);
-        }
-
+        List<CloudResource> updateResult = addOrUpdateResources(registrationResult);
+        assertNotNull(updateResult);
 
         String actuatorId2 = updateResult.get(1).getFederationInfo().get(federation2).getSymbioteId();
 
@@ -181,24 +150,16 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
 
         // Register resources
         List<CloudResource> cloudResources = createTestCloudResources();
-        List<CloudResource> registrationResult = null;
-        try {
-            String jsonArray = mapper.writeValueAsString(rabbitTemplate
-                    .convertSendAndReceive(platformRegistryExchange, addOrUpdateRequestKey, cloudResources));
-            CollectionType javaType = mapper.getTypeFactory()
-                    .constructCollectionType(List.class, CloudResource.class);
-            registrationResult = mapper.readValue(jsonArray, javaType);
-        } catch (IOException e) {
-            log.info("Problem deserializing registration request", e);
-        }
+        List<CloudResource> registrationResult = addOrUpdateResources(cloudResources);
+        assertNotNull(registrationResult);
 
         // We delete the 1st and 3rd resource
         List<String> internalIdsToBeRemoved = new ArrayList<>();
-        internalIdsToBeRemoved.add(cloudResources.get(0).getInternalId());
-        internalIdsToBeRemoved.add(cloudResources.get(2).getInternalId());
+        internalIdsToBeRemoved.add(stationarySensorInternalId);
+        internalIdsToBeRemoved.add(serviceInternalId);
 
-        List<String> removalResult = (List<String>) rabbitTemplate
-                .convertSendAndReceive(platformRegistryExchange, removalRequestKey, internalIdsToBeRemoved);
+        List<String> removalResult = removeResources(internalIdsToBeRemoved);
+        assertNotNull(removalResult);
 
         assertEquals(2, removalResult.size());
         assertTrue(removalResult.containsAll(internalIdsToBeRemoved));
@@ -206,7 +167,7 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         // Check what is stored in the database
         List<CloudResource> storedCloudResources = cloudResourceRepository.findAll();
         assertEquals(1, storedCloudResources.size());
-        assertEquals(cloudResources.get(1).getInternalId(), storedCloudResources.get(0).getInternalId());
+        assertEquals(actuatorInternalId, storedCloudResources.get(0).getInternalId());
         
         List<FederatedResource> storedFederatedResources = resourceRepository.findAll();
         assertEquals(1, storedFederatedResources.size());
@@ -227,5 +188,141 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
 
         assertEquals(3, message.size());
         assertTrue(message.containsAll(Arrays.asList(expectedResourceId1, expectedResourceId2, expectedResourceId3)));
+    }
+
+    @Test
+    public void shareResourcesTest() throws InterruptedException {
+        // Register resources
+        List<CloudResource> cloudResources = createTestCloudResources();
+        List<CloudResource> registrationResult = addOrUpdateResources(cloudResources);
+        assertNotNull(registrationResult);
+
+        // Construct share resources message
+        Map<String, Map<String, Boolean>> resourcesToBeShared = new HashMap<>();
+        Map<String, Boolean> federation1Map = new HashMap<>();
+        Map<String, Boolean> federation2Map = new HashMap<>();
+
+        // This resource is already shared in federation1, but we won't to make sure that its bartering status will change
+        federation1Map.put(actuatorInternalId, false);
+
+        federation2Map.put(actuatorInternalId, false);
+        federation2Map.put(serviceInternalId, true);
+
+        resourcesToBeShared.put(federation1, federation1Map);
+        resourcesToBeShared.put(federation2, federation2Map);
+
+        List<CloudResource> sharingResourcesResult = shareResources(resourcesToBeShared);
+        assertNotNull(sharingResourcesResult);
+
+        // Check what it is received
+        assertEquals(2, sharingResourcesResult.size());
+        assertEquals(2, sharingResourcesResult.get(0).getFederationInfo().size());
+        assertEquals(2, sharingResourcesResult.get(1).getFederationInfo().size());
+
+        CloudResource actuator = sharingResourcesResult.get(0).getResource() instanceof Actuator ?
+                sharingResourcesResult.get(0) : sharingResourcesResult.get(1);
+        CloudResource service = sharingResourcesResult.get(0).getResource() instanceof Service ?
+                sharingResourcesResult.get(0) : sharingResourcesResult.get(1);
+
+        // Make sure that the above works correctly
+        assertTrue(actuator.getResource() instanceof Actuator);
+        assertTrue(service.getResource() instanceof Service);
+
+        String actuatorIdFed1 = actuator.getFederationInfo().get(federation1).getSymbioteId();
+        String actuatorIdFed2 = actuator.getFederationInfo().get(federation2).getSymbioteId();
+        String serviceIdFed2 = service.getFederationInfo().get(federation2).getSymbioteId();
+
+        // Check what is stored in the databases
+        List<CloudResource> storedCloudResources = cloudResourceRepository.findAll();
+        assertEquals(3, storedCloudResources.size());
+        assertEquals(2, storedCloudResources.get(0).getFederationInfo().size());
+        assertEquals(2, storedCloudResources.get(1).getFederationInfo().size());
+        assertEquals(2, storedCloudResources.get(2).getFederationInfo().size());
+
+        List<FederatedResource> storedFederatedResources = resourceRepository.findAll();
+        assertEquals(6, storedFederatedResources.size());
+
+
+        // Check what dummySubscriptionManagerListener received
+        while (dummySubscriptionManagerListener.getResourcesAddedOrUpdatedMessages().size() < 2)
+            TimeUnit.MILLISECONDS.sleep(100);
+
+
+        assertEquals(2, dummySubscriptionManagerListener.getResourcesAddedOrUpdatedMessages().size());
+        List<FederatedResource> message = dummySubscriptionManagerListener
+                .getResourcesAddedOrUpdatedMessages().get(1).getNewFederatedResources();
+
+        assertEquals(3, message.size());
+        assertTrue(message.stream().map(FederatedResource::getId).collect(Collectors.toList()).containsAll(
+                Arrays.asList(actuatorIdFed1, actuatorIdFed2, serviceIdFed2)
+        ));
+    }
+
+    @Test
+    public void unshareResourcesTest() throws InterruptedException {
+
+        // Register resources
+        List<CloudResource> cloudResources = createTestCloudResources();
+        List<CloudResource> registrationResult = addOrUpdateResources(cloudResources);
+        assertNotNull(registrationResult);
+
+        String stationarySensorIdFed1 = registrationResult.get(0).getFederationInfo().get(federation1).getSymbioteId();
+        String actuatorIdFed1 = registrationResult.get(1).getFederationInfo().get(federation1).getSymbioteId();
+
+        // Construct share resources message
+        Map<String, List<String>> resourcesToBeUnshared = new HashMap<>();
+        List<String> federation1List = new ArrayList<>();
+        List<String> federation2List = new ArrayList<>();
+
+        // These resources are exposed to federation1
+        federation1List.add(stationarySensorInternalId);
+        federation1List.add(actuatorInternalId);
+
+        // This resource is not exposed to federation2, but we include it to make sure that it does not break things
+        federation2List.add(actuatorInternalId);
+
+        resourcesToBeUnshared.put(federation1, federation1List);
+        resourcesToBeUnshared.put(federation2, federation2List);
+
+        List<CloudResource> unsharingResourcesResult = unshareResources(resourcesToBeUnshared);
+        assertNotNull(unsharingResourcesResult);
+
+        // Check what it is received
+        assertEquals(2, unsharingResourcesResult.size());
+        assertEquals(1, unsharingResourcesResult.get(0).getFederationInfo().size());
+        assertEquals(0, unsharingResourcesResult.get(1).getFederationInfo().size());
+
+        CloudResource stationarySensor = unsharingResourcesResult.get(0).getResource() instanceof StationarySensor ?
+                unsharingResourcesResult.get(0) : unsharingResourcesResult.get(1);
+        CloudResource actuator = unsharingResourcesResult.get(0).getResource() instanceof Actuator ?
+                unsharingResourcesResult.get(0) : unsharingResourcesResult.get(1);
+
+
+        // Make sure that the above works correctly
+        assertTrue(stationarySensor.getResource() instanceof StationarySensor);
+        assertTrue(actuator.getResource() instanceof Actuator);
+
+        // Check what is stored in the databases
+        List<CloudResource> storedCloudResources = cloudResourceRepository.findAll();
+        assertEquals(3, storedCloudResources.size());
+        assertEquals(1, storedCloudResources.get(0).getFederationInfo().size());
+        assertEquals(0, storedCloudResources.get(1).getFederationInfo().size());
+        assertEquals(1, storedCloudResources.get(2).getFederationInfo().size());
+
+        List<FederatedResource> storedFederatedResources = resourceRepository.findAll();
+        assertEquals(2, storedFederatedResources.size());
+
+
+        // Check what dummySubscriptionManagerListener received
+        while (dummySubscriptionManagerListener.getResourcesDeletedMessages().size() < 1)
+            TimeUnit.MILLISECONDS.sleep(100);
+
+
+        assertEquals(1, dummySubscriptionManagerListener.getResourcesDeletedMessages().size());
+        List<String> message = dummySubscriptionManagerListener
+                .getResourcesDeletedMessages().get(0).getDeletedIds();
+
+        assertEquals(2, message.size());
+        assertTrue(message.containsAll(Arrays.asList(stationarySensorIdFed1, actuatorIdFed1)));
     }
 }

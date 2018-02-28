@@ -1,17 +1,22 @@
 package eu.h2020.symbiote.pr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.CollectionType;
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
-import eu.h2020.symbiote.cloud.model.internal.FederatedCloudResource;
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
 import eu.h2020.symbiote.cloud.model.internal.ResourceSharingInformation;
-import eu.h2020.symbiote.model.cim.*;
+import eu.h2020.symbiote.model.cim.Actuator;
+import eu.h2020.symbiote.model.cim.Resource;
+import eu.h2020.symbiote.model.cim.Service;
+import eu.h2020.symbiote.model.cim.StationarySensor;
 import eu.h2020.symbiote.pr.dummyListeners.DummySubscriptionManagerListener;
 import eu.h2020.symbiote.pr.model.PersistentVariable;
 import eu.h2020.symbiote.pr.repositories.CloudResourceRepository;
 import eu.h2020.symbiote.pr.repositories.PersistentVariableRepository;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import eu.h2020.symbiote.pr.services.AuthorizationService;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -25,8 +30,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Vasileios Glykantzis (ICOM)
@@ -36,6 +41,7 @@ import java.util.stream.Collectors;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 public abstract class PlatformRegistryBaseTestClass {
+    private static Log log = LogFactory.getLog(PlatformRegistryBaseTestClass.class);
 
     @Autowired
     protected WebApplicationContext wac;
@@ -74,6 +80,12 @@ public abstract class PlatformRegistryBaseTestClass {
 
     @Value("${rabbit.routingKey.platformRegistry.removalRequest}")
     protected String removalRequestKey;
+
+    @Value("${rabbit.routingKey.platformRegistry.shareResources}")
+    protected String shareResourcesKey;
+
+    @Value("${rabbit.routingKey.platformRegistry.unshareResources}")
+    protected String unshareResourcesKey;
 
     @Value("${rabbit.routingKey.platformRegistry.addOrUpdateFederatedResources}")
     protected String addOrUpdateFederatedResourcesKey;
@@ -204,5 +216,70 @@ public abstract class PlatformRegistryBaseTestClass {
         resources.add(service);
 
         return resources;
+    }
+
+    public List<CloudResource> addOrUpdateResources(List<CloudResource> cloudResources) {
+        List<CloudResource> registrationResult = null;
+
+        try {
+            String jsonArray = mapper.writeValueAsString(rabbitTemplate
+                    .convertSendAndReceive(platformRegistryExchange, addOrUpdateRequestKey, cloudResources));
+            CollectionType javaType = mapper.getTypeFactory()
+                    .constructCollectionType(List.class, CloudResource.class);
+            registrationResult = mapper.readValue(jsonArray, javaType);
+        } catch (IOException e) {
+            log.info("Problem deserializing addOrUpdate request", e);
+        }
+
+        return registrationResult;
+    }
+
+    public List<String> removeResources(List<String> internalIdsToBeRemoved) {
+        List<String> removalResult = null;
+
+        try {
+            List<String> helper =  (List<String>) rabbitTemplate
+                    .convertSendAndReceive(platformRegistryExchange, removalRequestKey, internalIdsToBeRemoved);
+            String jsonArray = mapper.writeValueAsString(helper);
+            CollectionType javaType = mapper.getTypeFactory()
+                    .constructCollectionType(List.class, String.class);
+            removalResult = mapper.readValue(jsonArray, javaType);
+        } catch (IOException e) {
+            log.info("Problem deserializing removal request", e);
+        }
+
+        return removalResult;
+    }
+
+    public List<CloudResource> shareResources(Map<String, Map<String, Boolean>> resourcesToBeShared) {
+        List<CloudResource> shareResourcesResult = null;
+
+        try {
+            String jsonArray = mapper.writeValueAsString(rabbitTemplate
+                    .convertSendAndReceive(platformRegistryExchange, shareResourcesKey, resourcesToBeShared));
+            CollectionType javaType = mapper.getTypeFactory()
+                    .constructCollectionType(List.class, CloudResource.class);
+            shareResourcesResult = mapper.readValue(jsonArray, javaType);
+        } catch (IOException e) {
+            log.info("Problem deserializing sharing resources request", e);
+        }
+
+        return shareResourcesResult;
+    }
+
+    public List<CloudResource> unshareResources(Map<String, List<String>> resourcesToBeUnshared) {
+        List<CloudResource> shareResourcesResult = null;
+
+        try {
+            String jsonArray = mapper.writeValueAsString(rabbitTemplate
+                    .convertSendAndReceive(platformRegistryExchange, unshareResourcesKey, resourcesToBeUnshared));
+            CollectionType javaType = mapper.getTypeFactory()
+                    .constructCollectionType(List.class, CloudResource.class);
+            shareResourcesResult = mapper.readValue(jsonArray, javaType);
+        } catch (IOException e) {
+            log.info("Problem deserializing unsharing resources request", e);
+        }
+
+        return shareResourcesResult;
     }
 }

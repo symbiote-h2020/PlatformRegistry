@@ -75,8 +75,8 @@ public class ResourceService {
      * @param cloudResources registration message sent by Registration Handler
      * @return a list of the new/updated CloudResources
      */
-    public List<CloudResource> savePlatformResources(List<CloudResource> cloudResources) {
-        log.trace("savePlatformResources: " + ReflectionToStringBuilder.toString(cloudResources));
+    public List<CloudResource> addOrUpdatePlatformResources(List<CloudResource> cloudResources) {
+        log.trace("addOrUpdatePlatformResources: " + ReflectionToStringBuilder.toString(cloudResources));
 
         List<FederatedResource> resourcesToSave = new LinkedList<>();
 
@@ -89,12 +89,17 @@ public class ResourceService {
 
             String serializedResource = serializeResource(cloudResource.getResource());
 
+            // if the federationInfo of the cloudResource is null, initialize it
+            if (cloudResource.getFederationInfo() == null)
+                cloudResource.setFederationInfo(new HashMap<>());
+
             for (Map.Entry<String,  ResourceSharingInformation> entry : cloudResource.getFederationInfo().entrySet()) {
                 Resource newResource = deserializeResource(serializedResource);
-                String federationId = entry.getKey();
-                ResourceSharingInformation sharingInformation = entry.getValue();
 
                 if (newResource != null) {
+                    String federationId = entry.getKey();
+                    ResourceSharingInformation sharingInformation = entry.getValue();
+
                     if (sharingInformation.getSymbioteId() == null) {
                         String newFederatedId = createNewResourceId(nextId);
                         sharingInformation.setSymbioteId(newFederatedId);
@@ -136,7 +141,7 @@ public class ResourceService {
      * @return the list of the removed resources
      */
     public List<String> removePlatformResources(List<String> internalIds) {
-        log.trace("removeFederatedResources: " + ReflectionToStringBuilder.toString(internalIds));
+        log.trace("removePlatformResources: " + ReflectionToStringBuilder.toString(internalIds));
 
         if (internalIds == null)
             return new ArrayList<>();
@@ -172,7 +177,81 @@ public class ResourceService {
      * @return a list of the updated CloudResources
      */
     public List<CloudResource> shareResources(Map<String, Map<String, Boolean>> resourcesToBeShared) {
-        return new ArrayList<>();
+
+        long nextId = (Long) idSequence.getValue();
+        List<FederatedResource> resourcesToSave = new LinkedList<>();
+
+        // First find all the resources that are going to be shared
+        Set<String> cloudResourcesIds = new HashSet<>();
+        for (Map.Entry<String, Map<String, Boolean>> federationEntry : resourcesToBeShared.entrySet())
+            for (Map.Entry<String, Boolean> resourceEntry : federationEntry.getValue().entrySet())
+                cloudResourcesIds.add(resourceEntry.getKey());
+
+        // Fetch the cloudResources from the database and convert it to a map
+        Map<String, CloudResource> cloudResourcesMap = cloudResourceRepository.findAllByInternalIdIn(cloudResourcesIds).stream()
+                .collect(Collectors.toMap(CloudResource::getInternalId, cloudResource -> cloudResource));
+
+        // Iterate again and create the extra FederatedResources
+        for (Map.Entry<String, Map<String, Boolean>> federationEntry : resourcesToBeShared.entrySet()) {
+            String federationId = federationEntry.getKey();
+
+            for (Map.Entry<String, Boolean> resourceEntry : federationEntry.getValue().entrySet()) {
+                String internalId = resourceEntry.getKey();
+                Boolean barteringStatus = resourceEntry.getValue();
+                CloudResource cloudResource = cloudResourcesMap.get(internalId);
+
+                // Continue if the cloudResource exists and if it is not already shared in the federation
+                if (cloudResource != null) {
+                    // Here, we do a trick. Instead of cloning the cloudResource, we just serialize it and deserialize it.
+                    // So, every time we deserialize a new object (cloned) is created. We did that to avoid the cumbersome
+                    // implementation of the clone() in every Resource and Resource field (e.g. StationarySensor, MobileSensor,
+                    // Location, ...)
+
+                    String serializedResource = serializeResource(cloudResource.getResource());
+                    Resource newResource = deserializeResource(serializedResource);
+
+                    if (newResource != null) {
+                        ResourceSharingInformation sharingInformation;
+
+                        if (!cloudResource.getFederationInfo().containsKey(federationId)) {
+                            sharingInformation= new ResourceSharingInformation();
+                            sharingInformation.setBartering(barteringStatus);
+                            sharingInformation.setSymbioteId(createNewResourceId(nextId));
+                            nextId++;
+                        } else
+                            sharingInformation = cloudResource.getFederationInfo().get(federationId);
+
+
+                        // Create the new FederatedResource
+                        resourcesToSave.add(new FederatedResource(
+                                newResource,
+                                sharingInformation.getSymbioteId(),
+                                federationId,
+                                sharingInformation.getBartering() != null ? sharingInformation.getBartering() : false));
+
+                        // Update the cloudResource
+                        cloudResource.getFederationInfo().put(federationId, sharingInformation);
+                    }
+
+
+                }
+            }
+        }
+
+        // Create CloudResource list
+        List<CloudResource> cloudResources = new ArrayList<>(cloudResourcesMap.values());
+
+        resourceRepository.save(resourcesToSave);
+        cloudResourceRepository.save(cloudResources);
+        idSequence.setValue(nextId);
+        persistentVariableRepository.save(idSequence);
+
+        // Inform Subscription Manager for the new resources
+        if (resourcesToSave.size() > 0)
+            rabbitTemplate.convertAndSend(subscriptionManagerExchange, smaddOrUpdateFederatedResourcesKey,
+                    new ResourcesAddedOrUpdatedMessage(resourcesToSave));
+
+        return cloudResources;
     }
 
 
@@ -183,7 +262,48 @@ public class ResourceService {
      * @return a list of the updated CloudResources
      */
     public List<CloudResource>  unshareResources(Map<String, List<String>> resourcesToBeUnshared) {
-        return new ArrayList<>();
+
+        List<String> federatedIdsToRemove = new ArrayList<>();
+
+        // First find all the resources that are going to be unshared
+        Set<String> cloudResourcesIds = new HashSet<>();
+        for (Map.Entry<String, List<String>> federationEntry : resourcesToBeUnshared.entrySet())
+            cloudResourcesIds.addAll(federationEntry.getValue());
+
+        // Fetch the cloudResources from the database and convert it to a map
+        Map<String, CloudResource> cloudResourcesMap = cloudResourceRepository.findAllByInternalIdIn(cloudResourcesIds).stream()
+                .collect(Collectors.toMap(CloudResource::getInternalId, cloudResource -> cloudResource));
+
+        // Iterate again and remove the federatedResources
+        for (Map.Entry<String, List<String>> federationEntry : resourcesToBeUnshared.entrySet()) {
+            String federationId = federationEntry.getKey();
+
+            for (String internalId : federationEntry.getValue()) {
+                CloudResource cloudResource = cloudResourcesMap.get(internalId);
+
+                if (cloudResource != null) {
+                    // Remove it from the cloudResource
+                    ResourceSharingInformation sharingInfo = cloudResource.getFederationInfo().remove(federationId);
+
+                    // Add it to the remove list
+                    if (sharingInfo != null)
+                        federatedIdsToRemove.add(sharingInfo.getSymbioteId());
+                }
+
+            }
+        }
+
+        // Create CloudResource list
+        List<CloudResource> cloudResources = new ArrayList<>(cloudResourcesMap.values());
+
+        cloudResourceRepository.save(cloudResources);
+        resourceRepository.deleteAllByIdIn(federatedIdsToRemove);
+
+        // Inform Subscription Manager for the removed resources
+        rabbitTemplate.convertAndSend(subscriptionManagerExchange, smremoveFederatedResourcesKey,
+                new ResourcesDeletedMessage(federatedIdsToRemove));
+
+        return cloudResources;
     }
 
 
