@@ -29,8 +29,9 @@ public class SubscriptionManagerListenerTests extends PlatformRegistryBaseTestCl
     @Test
     public void newResourcesTest() throws InterruptedException{
 
+        List<FederatedResource> testFederatedResources = createTestFederatedResources(testPlatformId);
         rabbitTemplate.convertAndSend(platformRegistryExchange, addOrUpdateFederatedResourcesKey,
-                new ResourcesAddedOrUpdatedMessage(createTestFederatedResources(testPlatformId)));
+                new ResourcesAddedOrUpdatedMessage(testFederatedResources));
 
         // Sleep to make sure that the platform has been updated in the repo before querying
         TimeUnit.MILLISECONDS.sleep(500);
@@ -39,26 +40,28 @@ public class SubscriptionManagerListenerTests extends PlatformRegistryBaseTestCl
         List<FederatedResource> stored = resourceRepository.findAll();
         assertEquals(3, stored.size());
 
-        Resource resource1 = resourceRepository.findOne(createNewResourceId(0, testPlatformId)).getResource();
+
+
+        Resource resource1 = resourceRepository.findOne(testFederatedResources.get(0).getId()).getResource();
         assertTrue(resource1 instanceof StationarySensor);
 
-        Resource resource2 = resourceRepository.findOne(createNewResourceId(1, testPlatformId)).getResource();
+        Resource resource2 = resourceRepository.findOne(testFederatedResources.get(1).getId()).getResource();
         assertTrue(resource2 instanceof Actuator);
 
-        Resource resource3 = resourceRepository.findOne(createNewResourceId(2, testPlatformId)).getResource();
+        Resource resource3 = resourceRepository.findOne(testFederatedResources.get(2).getId()).getResource();
         assertTrue(resource3 instanceof Service);
     }
 
     @Test
     public void resourcesDeletedTest() throws InterruptedException{
 
-        List<FederatedResource> federatedResources = createTestFederatedResources(testPlatformId);
-        resourceRepository.save(federatedResources);
+        List<FederatedResource> testFederatedResources = createTestFederatedResources(testPlatformId);
+        resourceRepository.save(testFederatedResources);
 
         ResourcesDeletedMessage deleteMessage = new ResourcesDeletedMessage(Arrays.asList(
-                federatedResources.get(0).getId(),
-                federatedResources.get(2).getId(),
-                createNewResourceId(1000, testPlatformId) // Does not exist
+                testFederatedResources.get(0).getId(),
+                testFederatedResources.get(2).getId(),
+                createNewResourceId(1000, testPlatformId, federation1) // Does not exist
         ));
 
         rabbitTemplate.convertAndSend(platformRegistryExchange, removeFederatedResourcesKey, deleteMessage);
@@ -68,6 +71,6 @@ public class SubscriptionManagerListenerTests extends PlatformRegistryBaseTestCl
 
         List<FederatedResource> stored = resourceRepository.findAll();
         assertEquals(1, stored.size());
-        assertEquals(createNewResourceId(1, testPlatformId), stored.get(0).getId());
+        assertEquals(testFederatedResources.get(1).getId(), stored.get(0).getId());
     }
 }

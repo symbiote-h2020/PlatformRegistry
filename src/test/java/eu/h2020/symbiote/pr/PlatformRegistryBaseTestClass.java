@@ -123,12 +123,12 @@ public abstract class PlatformRegistryBaseTestClass {
         persistentVariableRepository.deleteAll();
     }
 
-    public String createNewResourceId(long id) {
-        return String.format("%0" + Long.BYTES * 2 + "x@%s", id, platformId);
+    public String createNewResourceId(long id, String federationId) {
+        return String.format("%0" + Long.BYTES * 2 + "x@%s@%s", id, platformId, federationId);
     }
 
-    public String createNewResourceId(long id, String platformId) {
-        return String.format("%0" + Long.BYTES * 2 + "x@%s", id, platformId);
+    public String createNewResourceId(long id, String platformId, String federationId) {
+        return String.format("%0" + Long.BYTES * 2 + "x@%s@%s", id, platformId, federationId);
     }
 
     public List<CloudResource> createTestCloudResources() {
@@ -184,11 +184,11 @@ public abstract class PlatformRegistryBaseTestClass {
         List<Resource> resources = createTestResources(platform);
         List<FederatedResource> federatedResources = new ArrayList<>();
         federatedResources.add(new FederatedResource(
-                resources.get(0), createNewResourceId(0, testPlatformId), federation1, true));
+                resources.get(0), createNewResourceId(0, testPlatformId, federation1), federation1, true));
         federatedResources.add(new FederatedResource(
-                resources.get(1), createNewResourceId(1, testPlatformId), federation2, false));
+                resources.get(1), createNewResourceId(1, testPlatformId, federation2), federation2, false));
         federatedResources.add(new FederatedResource(
-                resources.get(2), createNewResourceId(2, testPlatformId), federation1, true));
+                resources.get(2), createNewResourceId(2, testPlatformId, federation1), federation1, true));
         return federatedResources;
     }
 

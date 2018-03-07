@@ -25,6 +25,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * Handles the authentication and authorization procedures. This class is used as a wrapper around ComponentSecurityHandler.
+ * It is mainly used to mock the security during unit tests as well as disabling security if there is a need to.
+ *
  * @author Vasileios Glykantzis (ICOM)
  * @since 2/22/2018.
  */
@@ -81,6 +84,12 @@ public class AuthorizationService {
             enableSecurity();
     }
 
+    /**
+     * Checks if the client has appropriate access rights to ge the list of the registered resources.
+     *
+     * @return if the status of the returned ResponseEntity is OK, then the client has sufficient access rights.
+     * Otherwise, the body includes some indication of the failure
+     */
     public ResponseEntity checkListResourcesRequest(HttpHeaders httpHeaders, String serviceResponse) {
         if (securityEnabled) {
             if (httpHeaders == null)
@@ -99,9 +108,11 @@ public class AuthorizationService {
                         HttpStatus.BAD_REQUEST, serviceResponse);
             }
 
-            Set<String> checkedPolicies;
+            boolean checkResult;
             try {
-                checkedPolicies = checkSingleLocalHomeTokenAccessPolicy(securityRequest);
+                // Here we check the SingleLocalHomeTokenAccessPolicy. This has to be modified if we need to satisfy
+                // another access policy
+                checkResult = checkSingleLocalHomeTokenAccessPolicy(securityRequest);
             } catch (Exception e) {
                 log.info("Could not verify the access policies", e);
                 return AuthorizationServiceHelper.addSecurityService(
@@ -109,7 +120,7 @@ public class AuthorizationService {
                         HttpStatus.INTERNAL_SERVER_ERROR, serviceResponse);
             }
 
-            if (checkedPolicies.size() >= 1) {
+            if (checkResult) {
                 return new ResponseEntity<>(HttpStatus.OK);
             } else {
                 return AuthorizationServiceHelper.addSecurityService(
@@ -119,11 +130,17 @@ public class AuthorizationService {
         } else {
             log.debug("checkAccess: Security is disabled");
 
-            //if security is disabled in properties
+            // if security is disabled in properties
             return new ResponseEntity<>("Security disabled", HttpStatus.OK);
         }
     }
 
+    /**
+     * Generates a service response to be included in the response to the client, so that the server can be authenticated.
+     *
+     * @return if the status of the returned ResponseEntity is OK, then the service response was successfully created and
+     * it is contained in the body. Otherwise, the body includes some indication of the failure
+     */
     public ResponseEntity generateServiceResponse() {
         if (securityEnabled) {
             try {
@@ -141,6 +158,11 @@ public class AuthorizationService {
 
     }
 
+    /**
+     * Enables Security
+     *
+     * @throws SecurityHandlerException
+     */
     private void enableSecurity() throws SecurityHandlerException {
         securityEnabled = true;
         componentSecurityHandler = ComponentSecurityHandlerFactory.getComponentSecurityHandler(
@@ -153,7 +175,14 @@ public class AuthorizationService {
 
     }
 
-    private Set<String> checkSingleLocalHomeTokenAccessPolicy(SecurityRequest securityRequest)
+    /**
+     * Checks if the security request passes the SingleLocalHomeTokenAccessPolicy
+     *
+     * @param securityRequest the security request in the client's request
+     * @return a boolean indicating if the request passes the access policy or not
+     * @throws Exception
+     */
+    private boolean checkSingleLocalHomeTokenAccessPolicy(SecurityRequest securityRequest)
             throws Exception {
         Map<String, IAccessPolicy> accessPoliciesMap = new HashMap<>();
         Map<String, String> requiredClaims = new HashMap<>();
@@ -165,7 +194,8 @@ public class AuthorizationService {
                 new SingleTokenAccessPolicySpecifier(AccessPolicyType.SLHTAP, requiredClaims));
         accessPoliciesMap.put("SingleLocalHomeTokenAccessPolicy", policy);
 
-        return componentSecurityHandler.getSatisfiedPoliciesIdentifiers(accessPoliciesMap, securityRequest);
+        // if the satisfiedPoliciesIdentifies size is greater than 0, then the policy is satisfied
+        return componentSecurityHandler.getSatisfiedPoliciesIdentifiers(accessPoliciesMap, securityRequest).size() > 0;
     }
 }
 

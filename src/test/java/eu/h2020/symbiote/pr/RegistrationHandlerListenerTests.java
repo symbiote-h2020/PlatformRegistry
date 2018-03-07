@@ -1,6 +1,5 @@
 package eu.h2020.symbiote.pr;
 
-import com.fasterxml.jackson.databind.type.CollectionType;
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
 import eu.h2020.symbiote.cloud.model.internal.ResourceSharingInformation;
@@ -11,14 +10,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Vasileios Glykantzis (ICOM)
@@ -58,7 +54,7 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
 
         FederatedResource resource2 = resourceRepository.findOne(expectedResourceId2);
         assertTrue(resource2.getResource() instanceof StationarySensor);
-        assertTrue(resource1.getBartered() != resource2.getBartered());
+        assertNotSame(resource1.getBartered(), resource2.getBartered());
         assertEquals("stationarySensor", resource1.getResource().getName());
         assertEquals(resource1.getResource().getName(), resource2.getResource().getName());
 

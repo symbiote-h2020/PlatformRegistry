@@ -37,8 +37,8 @@ public class ResourceService {
     private ObjectMapper mapper = new ObjectMapper();
     private String platformId;
     private String subscriptionManagerExchange;
-    private String smaddOrUpdateFederatedResourcesKey;
-    private String smremoveFederatedResourcesKey;
+    private String smAddOrUpdateFederatedResourcesKey;
+    private String smRemoveFederatedResourcesKey;
 
     @Autowired
     public ResourceService(ResourceRepository resourceRepository,
@@ -48,8 +48,8 @@ public class ResourceService {
                            PersistentVariable idSequence,
                            @Value("${platform.id}") String platformId,
                            @Value("${rabbit.exchange.subscriptionManager.name}") String subscriptionManagerExchange,
-                           @Value("${rabbit.routingKey.subscriptionManager.addOrUpdateFederatedResources}") String smaddOrUpdateFederatedResourcesKey,
-                           @Value("${rabbit.routingKey.subscriptionManager.removeFederatedResources}") String smremoveFederatedResourcesKey) {
+                           @Value("${rabbit.routingKey.subscriptionManager.addOrUpdateFederatedResources}") String smAddOrUpdateFederatedResourcesKey,
+                           @Value("${rabbit.routingKey.subscriptionManager.removeFederatedResources}") String smRemoveFederatedResourcesKey) {
         this.resourceRepository = resourceRepository;
         this.cloudResourceRepository = cloudResourceRepository;
         this.rabbitTemplate = rabbitTemplate;
@@ -62,11 +62,11 @@ public class ResourceService {
         Assert.notNull(subscriptionManagerExchange, "The subscriptionManagerExchange should not be null");
         this.subscriptionManagerExchange = subscriptionManagerExchange;
 
-        Assert.notNull(smaddOrUpdateFederatedResourcesKey, "The smaddOrUpdateFederatedResourcesKey should not be null");
-        this.smaddOrUpdateFederatedResourcesKey = smaddOrUpdateFederatedResourcesKey;
+        Assert.notNull(smAddOrUpdateFederatedResourcesKey, "The smAddOrUpdateFederatedResourcesKey should not be null");
+        this.smAddOrUpdateFederatedResourcesKey = smAddOrUpdateFederatedResourcesKey;
 
-        Assert.notNull(smremoveFederatedResourcesKey, "The smremoveFederatedResourcesKey should not be null");
-        this.smremoveFederatedResourcesKey = smremoveFederatedResourcesKey;
+        Assert.notNull(smRemoveFederatedResourcesKey, "The smRemoveFederatedResourcesKey should not be null");
+        this.smRemoveFederatedResourcesKey = smRemoveFederatedResourcesKey;
     }
 
     /**
@@ -101,7 +101,7 @@ public class ResourceService {
                     ResourceSharingInformation sharingInformation = entry.getValue();
 
                     if (sharingInformation.getSymbioteId() == null) {
-                        String newFederatedId = createNewResourceId(nextId);
+                        String newFederatedId = createNewResourceId(nextId, federationId);
                         sharingInformation.setSymbioteId(newFederatedId);
                         nextId++;
                     }
@@ -120,14 +120,14 @@ public class ResourceService {
 
         // Inform Subscription Manager for the new resources
         if (resourcesToSave.size() > 0)
-            rabbitTemplate.convertAndSend(subscriptionManagerExchange, smaddOrUpdateFederatedResourcesKey,
+            rabbitTemplate.convertAndSend(subscriptionManagerExchange, smAddOrUpdateFederatedResourcesKey,
                     new ResourcesAddedOrUpdatedMessage(resourcesToSave));
 
         // Find the resources that should be removed
         List<String> resourcesToBeRemoved = findResourcesToBeRemoved(cloudResources, resourcesToSave);
 
         if (resourcesToBeRemoved.size() > 0)
-            rabbitTemplate.convertAndSend(subscriptionManagerExchange, smremoveFederatedResourcesKey,
+            rabbitTemplate.convertAndSend(subscriptionManagerExchange, smRemoveFederatedResourcesKey,
                     new ResourcesDeletedMessage(resourcesToBeRemoved));
 
         return cloudResources;
@@ -162,7 +162,7 @@ public class ResourceService {
                 .map(CloudResource::getInternalId).collect(Collectors.toList());
 
         // Inform Subscription Manager for the removed resources
-        rabbitTemplate.convertAndSend(subscriptionManagerExchange, smremoveFederatedResourcesKey,
+        rabbitTemplate.convertAndSend(subscriptionManagerExchange, smRemoveFederatedResourcesKey,
                 new ResourcesDeletedMessage(federatedResourcesRemoved));
 
         return cloudResourcesRemoved;
@@ -216,7 +216,7 @@ public class ResourceService {
                         if (!cloudResource.getFederationInfo().containsKey(federationId)) {
                             sharingInformation= new ResourceSharingInformation();
                             sharingInformation.setBartering(barteringStatus);
-                            sharingInformation.setSymbioteId(createNewResourceId(nextId));
+                            sharingInformation.setSymbioteId(createNewResourceId(nextId, federationId));
                             nextId++;
                         } else
                             sharingInformation = cloudResource.getFederationInfo().get(federationId);
@@ -248,7 +248,7 @@ public class ResourceService {
 
         // Inform Subscription Manager for the new resources
         if (resourcesToSave.size() > 0)
-            rabbitTemplate.convertAndSend(subscriptionManagerExchange, smaddOrUpdateFederatedResourcesKey,
+            rabbitTemplate.convertAndSend(subscriptionManagerExchange, smAddOrUpdateFederatedResourcesKey,
                     new ResourcesAddedOrUpdatedMessage(resourcesToSave));
 
         return cloudResources;
@@ -300,7 +300,7 @@ public class ResourceService {
         resourceRepository.deleteAllByIdIn(federatedIdsToRemove);
 
         // Inform Subscription Manager for the removed resources
-        rabbitTemplate.convertAndSend(subscriptionManagerExchange, smremoveFederatedResourcesKey,
+        rabbitTemplate.convertAndSend(subscriptionManagerExchange, smRemoveFederatedResourcesKey,
                 new ResourcesDeletedMessage(federatedIdsToRemove));
 
         return cloudResources;
@@ -386,7 +386,7 @@ public class ResourceService {
                 .collect(Collectors.toList());
     }
 
-    private String createNewResourceId(long id) {
-        return String.format("%0" + Long.BYTES * 2 + "x@%s", id, platformId);
+    private String createNewResourceId(long id, String federationId) {
+        return String.format("%0" + Long.BYTES * 2 + "x@%s@%s", id, platformId, federationId);
     }
 }
