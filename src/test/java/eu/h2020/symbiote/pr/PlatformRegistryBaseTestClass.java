@@ -75,16 +75,16 @@ public abstract class PlatformRegistryBaseTestClass {
     @Value("${rabbit.exchange.platformRegistry.name}")
     protected String platformRegistryExchange;
 
-    @Value("${rabbit.routingKey.platformRegistry.addOrUpdateRequest}")
+    @Value("${rabbit.routingKey.platformRegistry.update}")
     protected String addOrUpdateRequestKey;
 
-    @Value("${rabbit.routingKey.platformRegistry.removalRequest}")
+    @Value("${rabbit.routingKey.platformRegistry.delete}")
     protected String removalRequestKey;
 
-    @Value("${rabbit.routingKey.platformRegistry.shareResources}")
+    @Value("${rabbit.routingKey.platformRegistry.share}")
     protected String shareResourcesKey;
 
-    @Value("${rabbit.routingKey.platformRegistry.unshareResources}")
+    @Value("${rabbit.queueName.platformRegistry.unshare}")
     protected String unshareResourcesKey;
 
     @Value("${rabbit.routingKey.platformRegistry.addOrUpdateFederatedResources}")

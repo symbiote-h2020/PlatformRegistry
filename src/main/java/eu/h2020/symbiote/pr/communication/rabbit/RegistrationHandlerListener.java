@@ -40,7 +40,7 @@ public class RegistrationHandlerListener {
     @RabbitListener(
             bindings = @QueueBinding(
                     value = @Queue(
-                            value = "${rabbit.queueName.platformRegistry.addOrUpdateRequest}",
+                            value = "${rabbit.queueName.platformRegistry.update}",
                             durable = "${rabbit.exchange.platformRegistry.durable}",
                             autoDelete = "${rabbit.exchange.platformRegistry.autodelete}",
                             exclusive = "false"),
@@ -51,7 +51,7 @@ public class RegistrationHandlerListener {
                             autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
                             internal = "${rabbit.exchange.platformRegistry.internal}",
                             type = "${rabbit.exchange.platformRegistry.type}"),
-                    key = "${rabbit.routingKey.platformRegistry.addOrUpdateRequest}")
+                    key = "${rabbit.routingKey.platformRegistry.update}")
     )
     public List<CloudResource> addOrUpdate(List<CloudResource> cloudResources) {
         log.trace("Received resource add or update request from registration Handler: " +
@@ -76,7 +76,7 @@ public class RegistrationHandlerListener {
      */
     @RabbitListener(
             bindings = @QueueBinding(
-                    value = @Queue(value = "${rabbit.queueName.platformRegistry.removalRequest}",
+                    value = @Queue(value = "${rabbit.queueName.platformRegistry.delete}",
                             durable = "${rabbit.exchange.platformRegistry.durable}",
                             autoDelete = "${rabbit.exchange.platformRegistry.autodelete}",
                             exclusive = "false"),
@@ -87,7 +87,7 @@ public class RegistrationHandlerListener {
                             autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
                             internal = "${rabbit.exchange.platformRegistry.internal}",
                             type = "${rabbit.exchange.platformRegistry.type}"),
-                    key = "${rabbit.routingKey.platformRegistry.removalRequest}")
+                    key = "${rabbit.routingKey.platformRegistry.delete}")
     )
     public List<String> removeFederatedResources(List<String> internalIds) {
         log.trace("Received resource removal request from registration Handler: " +
@@ -113,7 +113,7 @@ public class RegistrationHandlerListener {
      */
     @RabbitListener(
             bindings = @QueueBinding(
-                    value = @Queue(value = "${rabbit.queueName.platformRegistry.shareResources}",
+                    value = @Queue(value = "${rabbit.queueName.platformRegistry.share}",
                             durable = "${rabbit.exchange.platformRegistry.durable}",
                             autoDelete = "${rabbit.exchange.platformRegistry.autodelete}",
                             exclusive = "false"),
@@ -124,7 +124,7 @@ public class RegistrationHandlerListener {
                             autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
                             internal = "${rabbit.exchange.platformRegistry.internal}",
                             type = "${rabbit.exchange.platformRegistry.type}"),
-                    key = "${rabbit.routingKey.platformRegistry.shareResources}")
+                    key = "${rabbit.routingKey.platformRegistry.share}")
     )
     public List<CloudResource> shareResources(Map<String, Map<String, Boolean>> resourcesToBeShared) {
         log.trace("Received shareResources request from registration Handler: " +
@@ -150,7 +150,7 @@ public class RegistrationHandlerListener {
      */
     @RabbitListener(
             bindings = @QueueBinding(
-                    value = @Queue(value = "${rabbit.queueName.platformRegistry.unshareResources}",
+                    value = @Queue(value = "${rabbit.queueName.platformRegistry.unshare}",
                             durable = "${rabbit.exchange.platformRegistry.durable}",
                             autoDelete = "${rabbit.exchange.platformRegistry.autodelete}",
                             exclusive = "false"),
@@ -161,7 +161,7 @@ public class RegistrationHandlerListener {
                             autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
                             internal = "${rabbit.exchange.platformRegistry.internal}",
                             type = "${rabbit.exchange.platformRegistry.type}"),
-                    key = "${rabbit.routingKey.platformRegistry.unshareResources}")
+                    key = "${rabbit.queueName.platformRegistry.unshare}")
     )
     public List<CloudResource> unshareResources(Map<String, List<String>> resourcesToBeUnshared) {
         log.trace("Received shareResources request from registration Handler: " +
