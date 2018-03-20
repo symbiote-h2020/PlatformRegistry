@@ -5,6 +5,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Vasileios Glykantzis (ICOM)
@@ -13,9 +14,14 @@ import java.util.List;
 @RepositoryRestResource(collectionResourceRel = "resources", path = "resources")
 public interface ResourceRepository extends MongoRepository<FederatedResource, String> {
     // ToDo: consider some optimized query here
-    List<FederatedResource> findAllByIdIn(List<String> ids);
+    List<FederatedResource> findAllBySymbioteIdIn(Set<String> ids);
 
-    List<FederatedResource> findByFederationId(String federationId);
+    List<FederatedResource> findAllByCloudResource_InternalIdIn(Set<String> internalIds);
 
-    List<FederatedResource> deleteAllByIdIn(List<String> ids);
+    // Todo: remove this and replace it with a custom query to get this info from the cloudResource
+    List<FederatedResource> findAllByFederationsContaining(String federationId);
+
+    List<FederatedResource> deleteAllBySymbioteIdIn(Set<String> ids);
+
+    List<FederatedResource> deleteAllByCloudResource_InternalIdIn(Set<String> internalIds);
 }

@@ -9,7 +9,8 @@ import org.springframework.http.ResponseEntity;
 import java.util.Collections;
 
 /**
- * This class includes helper functions of handling the security operations. There is no need to be mocked
+ * This class includes helper functions for handling security operations. There is no need to be mocked during unit tests
+ * since it uses AuthorizationService is which mocked.
  *
  * @author Vasileios Glykantzis (ICOM)
  * @since 2/24/2018.

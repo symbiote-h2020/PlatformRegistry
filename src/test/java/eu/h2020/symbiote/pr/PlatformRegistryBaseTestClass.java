@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
+import eu.h2020.symbiote.cloud.model.internal.FederationInfoBean;
 import eu.h2020.symbiote.cloud.model.internal.ResourceSharingInformation;
 import eu.h2020.symbiote.model.cim.Actuator;
 import eu.h2020.symbiote.model.cim.Resource;
@@ -11,7 +12,6 @@ import eu.h2020.symbiote.model.cim.Service;
 import eu.h2020.symbiote.model.cim.StationarySensor;
 import eu.h2020.symbiote.pr.dummyListeners.DummySubscriptionManagerListener;
 import eu.h2020.symbiote.pr.model.PersistentVariable;
-import eu.h2020.symbiote.pr.repositories.CloudResourceRepository;
 import eu.h2020.symbiote.pr.repositories.PersistentVariableRepository;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import eu.h2020.symbiote.pr.services.AuthorizationService;
@@ -32,6 +32,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Vasileios Glykantzis (ICOM)
@@ -50,9 +51,6 @@ public abstract class PlatformRegistryBaseTestClass {
 
     @Autowired
     protected AuthorizationService authorizationService;
-
-    @Autowired
-    protected CloudResourceRepository cloudResourceRepository;
 
     @Autowired
     protected ResourceRepository resourceRepository;
@@ -108,7 +106,6 @@ public abstract class PlatformRegistryBaseTestClass {
 
     @Before
     public void setup() {
-        cloudResourceRepository.deleteAll();
         resourceRepository.deleteAll();
         persistentVariableRepository.deleteAll();
         dummySubscriptionManagerListener.clearLists();
@@ -118,58 +115,72 @@ public abstract class PlatformRegistryBaseTestClass {
 
     @After
     public void cleanup() {
-        cloudResourceRepository.deleteAll();
         resourceRepository.deleteAll();
         persistentVariableRepository.deleteAll();
     }
 
-    public String createNewResourceId(long id, String federationId) {
-        return String.format("%0" + Long.BYTES * 2 + "x@%s@%s", id, platformId, federationId);
+    public String createNewResourceId(long id) {
+        return String.format("%0" + Long.BYTES * 2 + "x@%s", id, platformId);
     }
 
-    public String createNewResourceId(long id, String platformId, String federationId) {
-        return String.format("%0" + Long.BYTES * 2 + "x@%s@%s", id, platformId, federationId);
+    public String createNewResourceId(long id, String platformId) {
+        return String.format("%0" + Long.BYTES * 2 + "x@%s", id, platformId);
     }
+
 
     public List<CloudResource> createTestCloudResources() {
 
-        List<Resource> resources = createTestResources(platformId);
+        List<Resource> resources = createTestResources();
 
         // Create 1st cloudResource
         Map<String, ResourceSharingInformation> resourceSharingInformationMap1 = new HashMap<>();
+
         ResourceSharingInformation sharingInformation1 = new ResourceSharingInformation();
         sharingInformation1.setBartering(true);
         resourceSharingInformationMap1.put(federation1, sharingInformation1);
+
         ResourceSharingInformation sharingInformation2 = new ResourceSharingInformation();
         sharingInformation2.setBartering(false);
         resourceSharingInformationMap1.put(federation2, sharingInformation2);
 
+        FederationInfoBean federationInfoBean1 = new FederationInfoBean();
+        federationInfoBean1.setSharingInformation(resourceSharingInformationMap1);
+
         CloudResource cloudResource1 = new CloudResource();
         cloudResource1.setResource(resources.get(0));
         cloudResource1.setInternalId("stationarySensorInternalId");
-        cloudResource1.setFederationInfo(resourceSharingInformationMap1);
+
+        cloudResource1.setFederationInfo(federationInfoBean1);
 
         // Create 2nd cloudResource
         Map<String, ResourceSharingInformation> resourceSharingInformationMap2 = new HashMap<>();
+
         ResourceSharingInformation sharingInformation3 = new ResourceSharingInformation();
         sharingInformation3.setBartering(true);
         resourceSharingInformationMap2.put(federation1, sharingInformation3);
 
+        FederationInfoBean federationInfoBean2 = new FederationInfoBean();
+        federationInfoBean2.setSharingInformation(resourceSharingInformationMap2);
+
         CloudResource cloudResource2 = new CloudResource();
         cloudResource2.setResource(resources.get(1));
         cloudResource2.setInternalId("actuatorInternalId");
-        cloudResource2.setFederationInfo(resourceSharingInformationMap2);
+        cloudResource2.setFederationInfo(federationInfoBean2);
 
         // Create 3rd cloudResource
         Map<String, ResourceSharingInformation> resourceSharingInformationMap3 = new HashMap<>();
+
         ResourceSharingInformation sharingInformation4 = new ResourceSharingInformation();
         sharingInformation4.setBartering(true);
         resourceSharingInformationMap3.put(federation1, sharingInformation4);
 
+        FederationInfoBean federationInfoBean3 = new FederationInfoBean();
+        federationInfoBean3.setSharingInformation(resourceSharingInformationMap3);
+
         CloudResource cloudResource3 = new CloudResource();
         cloudResource3.setResource(resources.get(2));
         cloudResource3.setInternalId("serviceInternalId");
-        cloudResource3.setFederationInfo(resourceSharingInformationMap3);
+        cloudResource3.setFederationInfo(federationInfoBean3);
 
         // Create a registration request for a federatedCloudResource
         List<CloudResource> cloudResources = new ArrayList<>();
@@ -180,19 +191,19 @@ public abstract class PlatformRegistryBaseTestClass {
         return cloudResources;
     }
 
-    public List<FederatedResource> createTestFederatedResources(String platform) {
-        List<Resource> resources = createTestResources(platform);
-        List<FederatedResource> federatedResources = new ArrayList<>();
-        federatedResources.add(new FederatedResource(
-                resources.get(0), createNewResourceId(0, testPlatformId, federation1), federation1, true));
-        federatedResources.add(new FederatedResource(
-                resources.get(1), createNewResourceId(1, testPlatformId, federation2), federation2, false));
-        federatedResources.add(new FederatedResource(
-                resources.get(2), createNewResourceId(2, testPlatformId, federation1), federation1, true));
-        return federatedResources;
+    public List<FederatedResource> createTestFederatedResources(String platformId) {
+        long id = 0;
+
+        List<CloudResource> cloudResources = createTestCloudResources();
+
+        FederatedResource federatedResource1 = new FederatedResource(createNewResourceId(0, platformId), cloudResources.get(0));
+        FederatedResource federatedResource2 = new FederatedResource(createNewResourceId(1, platformId), cloudResources.get(1));
+        FederatedResource federatedResource3 = new FederatedResource(createNewResourceId(2, platformId), cloudResources.get(2));
+
+        return new ArrayList<>(Arrays.asList(federatedResource1, federatedResource2, federatedResource3));
     }
 
-    public List<Resource> createTestResources(String platform) {
+    public List<Resource> createTestResources() {
         List<Resource> resources = new ArrayList<>();
 
         // Create 1st resource

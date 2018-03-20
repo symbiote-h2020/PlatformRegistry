@@ -74,7 +74,7 @@ dependencies {
             4) never commit build.gradle which has project dependencies active as it will break CI builds
     */
 
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.8.1') { changing = true }
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.8+') { changing = true }
 
     // Spring
     compile('org.springframework.cloud:spring-cloud-starter-config')
@@ -86,7 +86,7 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-data-mongodb')
 
     // Test only
-    testCompile('junit:junit:4.12')
+    testCompile('junit:junit:4.+')
     testCompile('org.springframework.boot:spring-boot-starter-test')
 
 }

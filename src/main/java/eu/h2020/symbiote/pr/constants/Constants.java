@@ -1,4 +1,4 @@
-package eu.h2020.symbiote.pr;
+package eu.h2020.symbiote.pr.constants;
 
 /**
  * @author Vasileios Glykantzis (ICOM)

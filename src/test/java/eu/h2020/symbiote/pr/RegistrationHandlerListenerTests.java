@@ -32,41 +32,44 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         List<CloudResource> result = addOrUpdateResources(cloudResources);
         assertNotNull(result);
 
-        String expectedResourceId1 = result.get(0).getFederationInfo().get(federation1).getSymbioteId();
-        String expectedResourceId2 = result.get(0).getFederationInfo().get(federation2).getSymbioteId();
-        String expectedResourceId3 = result.get(1).getFederationInfo().get(federation1).getSymbioteId();
-        String expectedResourceId4 = result.get(2).getFederationInfo().get(federation1).getSymbioteId();
+        String stationarySensorId = result.get(0).getFederationInfo().getSymbioteId();
+        String actuatorId = result.get(1).getFederationInfo().getSymbioteId();
+        String serviceId = result.get(2).getFederationInfo().getSymbioteId();
 
-        // Testing the RegistrationHandlerListener response
-        assertEquals(2, result.get(0).getFederationInfo().size());
-        assertEquals(1, result.get(1).getFederationInfo().size());
-        assertEquals(1, result.get(2).getFederationInfo().size());
+        // Testing the response
+        assertEquals(2, result.get(0).getFederationInfo().getSharingInformation().size());
+        assertEquals(1, result.get(1).getFederationInfo().getSharingInformation().size());
+        assertEquals(1, result.get(2).getFederationInfo().getSharingInformation().size());
 
         // Checking what is stored in the database
-        List<CloudResource> storedCloudResources = cloudResourceRepository.findAll();
-        assertEquals(3, storedCloudResources.size());
 
         List<FederatedResource> storedFederatedResources = resourceRepository.findAll();
-        assertEquals(4, storedFederatedResources.size());
+        assertEquals(3, storedFederatedResources.size());
 
-        FederatedResource resource1 = resourceRepository.findOne(expectedResourceId1);
-        assertTrue(resource1.getResource() instanceof StationarySensor);
+        FederatedResource resource1 = resourceRepository.findOne(stationarySensorId);
+        assertTrue(resource1.getCloudResource().getResource() instanceof StationarySensor);
+        assertEquals(2, resource1.getFederations().size());
+        assertTrue(resource1.getFederations().containsAll(Arrays.asList(federation1, federation2)));
+        assertEquals(2, resource1.getCloudResource().getFederationInfo().getSharingInformation().size());
+        assertTrue(resource1.getCloudResource().getFederationInfo().getSharingInformation().get(federation1).getBartering());
+        assertFalse(resource1.getCloudResource().getFederationInfo().getSharingInformation().get(federation2).getBartering());
+        assertEquals("stationarySensor", resource1.getCloudResource().getResource().getName());
 
-        FederatedResource resource2 = resourceRepository.findOne(expectedResourceId2);
-        assertTrue(resource2.getResource() instanceof StationarySensor);
-        assertNotSame(resource1.getBartered(), resource2.getBartered());
-        assertEquals("stationarySensor", resource1.getResource().getName());
-        assertEquals(resource1.getResource().getName(), resource2.getResource().getName());
+        FederatedResource resource2 = resourceRepository.findOne(actuatorId);
+        assertTrue(resource2.getCloudResource().getResource() instanceof Actuator);
+        assertEquals(1, resource2.getFederations().size());
+        assertTrue(resource2.getFederations().contains(federation1));
+        assertEquals(1, resource2.getCloudResource().getFederationInfo().getSharingInformation().size());
+        assertTrue(resource2.getCloudResource().getFederationInfo().getSharingInformation().get(federation1).getBartering());
+        assertEquals("actuator", resource2.getCloudResource().getResource().getName());
 
-        FederatedResource resource3 = resourceRepository.findOne(expectedResourceId3);
-        assertTrue(resource3.getResource() instanceof Actuator);
-        assertTrue(resource3.getBartered());
-        assertEquals("actuator", resource3.getResource().getName());
-
-        FederatedResource resource4 = resourceRepository.findOne(expectedResourceId4);
-        assertTrue(resource4.getResource() instanceof Service);
-        assertTrue(resource4.getBartered());
-        assertEquals("service", resource4.getResource().getName());
+        FederatedResource resource3 = resourceRepository.findOne(serviceId);
+        assertTrue(resource3.getCloudResource().getResource() instanceof Service);
+        assertEquals(1, resource3.getFederations().size());
+        assertTrue(resource3.getFederations().contains(federation1));
+        assertEquals(1, resource3.getCloudResource().getFederationInfo().getSharingInformation().size());
+        assertTrue(resource3.getCloudResource().getFederationInfo().getSharingInformation().get(federation1).getBartering());
+        assertEquals("service", resource3.getCloudResource().getResource().getName());
 
         // Check what dummySubscriptionManagerListener received
         while (dummySubscriptionManagerListener.getResourcesAddedOrUpdatedMessages().size() == 0)
@@ -77,10 +80,10 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         List<FederatedResource> message = dummySubscriptionManagerListener
                 .getResourcesAddedOrUpdatedMessages().get(0).getNewFederatedResources();
 
-        assertEquals(4, message.size());
-        assertTrue(message.stream().map(FederatedResource::getId).collect(Collectors.toList()).containsAll(
-                Arrays.asList(expectedResourceId1, expectedResourceId2, expectedResourceId3, expectedResourceId4)
-        ));
+        assertEquals(3, message.size());
+        assertTrue(message.stream()
+                .map(FederatedResource::getSymbioteId).collect(Collectors.toList())
+                .containsAll(Arrays.asList(stationarySensorId, actuatorId, serviceId)));
     }
 
     @Test
@@ -91,40 +94,45 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         List<CloudResource> registrationResult = addOrUpdateResources(cloudResources);
         assertNotNull(registrationResult);
 
-        String stationarySensorId1 = registrationResult.get(0).getFederationInfo().get(federation1).getSymbioteId();
-        String stationarySensorId2 = registrationResult.get(0).getFederationInfo().get(federation2).getSymbioteId();
-        String actuatorId1 = registrationResult.get(1).getFederationInfo().get(federation1).getSymbioteId();
-        String serviceId = registrationResult.get(2).getFederationInfo().get(federation1).getSymbioteId();
+        String stationarySensorId = registrationResult.get(0).getFederationInfo().getSymbioteId();
+        String actuatorId = registrationResult.get(1).getFederationInfo().getSymbioteId();
+        String serviceId = registrationResult.get(2).getFederationInfo().getSymbioteId();
 
         // We change the name of the stationary sensor
         String newStationarySensorName = "newStationarySensorName";
         registrationResult.get(0).getResource().setName(newStationarySensorName);
 
-        // Expose the mobile sensor in the federation2 too
+        // We expose the service in the federation2 too
         // We do not fill the bartering info, so it will get the default value "false"
-        registrationResult.get(1).getFederationInfo().put(federation2, new ResourceSharingInformation());
+        registrationResult.get(2).getFederationInfo().getSharingInformation().put(federation2, new ResourceSharingInformation());
+
+        // Remove the actuator from the registration result, which will be used for updating
+        registrationResult.remove(1);
 
         // Send update message
         List<CloudResource> updateResult = addOrUpdateResources(registrationResult);
         assertNotNull(updateResult);
 
-        String actuatorId2 = updateResult.get(1).getFederationInfo().get(federation2).getSymbioteId();
+        // Testing the response
+        assertEquals(2, updateResult.size());
+        assertEquals(newStationarySensorName, updateResult.get(0).getResource().getName());
+        assertEquals(2, updateResult.get(1).getFederationInfo().getSharingInformation().size());
+        assertTrue(updateResult.get(1).getFederationInfo().getSharingInformation().get(federation1).getBartering());
+        assertFalse(updateResult.get(1).getFederationInfo().getSharingInformation().get(federation2).getBartering());
 
         // Check what is store in the database
-        assertEquals(3, cloudResourceRepository.findAll().size());
-        assertEquals(5, resourceRepository.findAll().size());
-
-        FederatedResource stationarySensor1 = resourceRepository.findOne(stationarySensorId1);
-        FederatedResource stationarySensor2 = resourceRepository.findOne(stationarySensorId2);
-        FederatedResource actuator1 = resourceRepository.findOne(actuatorId1);
-        FederatedResource actuator2 = resourceRepository.findOne(actuatorId2);
+        FederatedResource stationarySensor = resourceRepository.findOne(stationarySensorId);
+        FederatedResource actuator = resourceRepository.findOne(actuatorId);
         FederatedResource service = resourceRepository.findOne(serviceId);
 
-        assertEquals(newStationarySensorName, stationarySensor1.getResource().getName());
-        assertEquals(newStationarySensorName, stationarySensor2.getResource().getName());
-        assertEquals("actuator", actuator1.getResource().getName());
-        assertEquals("actuator", actuator2.getResource().getName());
-        assertEquals("service", service.getResource().getName());
+        assertEquals(newStationarySensorName, stationarySensor.getCloudResource().getResource().getName());
+        assertEquals("actuator", actuator.getCloudResource().getResource().getName());
+        assertEquals("service", service.getCloudResource().getResource().getName());
+        assertEquals(2, service.getFederations().size());
+        assertTrue(service.getFederations().containsAll(Arrays.asList(federation1, federation2)));
+        assertEquals(2, service.getCloudResource().getFederationInfo().getSharingInformation().size());
+        assertTrue(service.getCloudResource().getFederationInfo().getSharingInformation().get(federation1).getBartering());
+        assertFalse(service.getCloudResource().getFederationInfo().getSharingInformation().get(federation2).getBartering());
 
         // Check what dummySubscriptionManagerListener received
         while (dummySubscriptionManagerListener.getResourcesAddedOrUpdatedMessages().size() < 2)
@@ -135,9 +143,9 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         List<FederatedResource> message = dummySubscriptionManagerListener
                 .getResourcesAddedOrUpdatedMessages().get(1).getNewFederatedResources();
 
-        assertEquals(5, message.size());
-        assertTrue(message.stream().map(FederatedResource::getId).collect(Collectors.toList()).containsAll(
-                Arrays.asList(stationarySensorId1, stationarySensorId2, actuatorId1, actuatorId2, serviceId)
+        assertEquals(2, message.size());
+        assertTrue(message.stream().map(FederatedResource::getSymbioteId).collect(Collectors.toList()).containsAll(
+                Arrays.asList(stationarySensorId, serviceId)
         ));
     }
 
@@ -161,30 +169,29 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         assertTrue(removalResult.containsAll(internalIdsToBeRemoved));
 
         // Check what is stored in the database
-        List<CloudResource> storedCloudResources = cloudResourceRepository.findAll();
-        assertEquals(1, storedCloudResources.size());
-        assertEquals(actuatorInternalId, storedCloudResources.get(0).getInternalId());
-        
         List<FederatedResource> storedFederatedResources = resourceRepository.findAll();
         assertEquals(1, storedFederatedResources.size());
-        assertEquals(registrationResult.get(1).getFederationInfo().get(federation1).getSymbioteId(),
-                storedFederatedResources.get(0).getId());
+        assertEquals(registrationResult.get(1).getFederationInfo().getSymbioteId(),
+                storedFederatedResources.get(0).getSymbioteId());
 
         // Check what dummySubscriptionManagerListener received
         while (dummySubscriptionManagerListener.getResourcesDeletedMessages().size() == 0)
             TimeUnit.MILLISECONDS.sleep(100);
 
-        String expectedResourceId1 = registrationResult.get(0).getFederationInfo().get(federation1).getSymbioteId();
-        String expectedResourceId2 = registrationResult.get(0).getFederationInfo().get(federation2).getSymbioteId();
-        String expectedResourceId3 = registrationResult.get(0).getFederationInfo().get(federation1).getSymbioteId();
+        String stationarySensorId = registrationResult.get(0).getFederationInfo().getSymbioteId();
+        String serviceId = registrationResult.get(2).getFederationInfo().getSymbioteId();
 
         assertEquals(1, dummySubscriptionManagerListener.getResourcesDeletedMessages().size());
-        List<String> message = dummySubscriptionManagerListener
-                .getResourcesDeletedMessages().get(0).getDeletedIds();
+        Map<String, Set<String>> message = dummySubscriptionManagerListener
+                .getResourcesDeletedMessages().get(0).getDeletedFederatedResourcesMap();
 
-        assertEquals(3, message.size());
-        assertTrue(message.containsAll(Arrays.asList(expectedResourceId1, expectedResourceId2, expectedResourceId3)));
+        assertEquals(2, message.size());
+        assertEquals(2, message.get(stationarySensorId).size());
+        assertTrue(message.get(stationarySensorId).containsAll(Arrays.asList(federation1, federation2)));
+        assertEquals(1, message.get(serviceId).size());
+        assertTrue(message.get(serviceId).contains(federation1));
     }
+
 
     @Test
     public void shareResourcesTest() throws InterruptedException {
@@ -198,7 +205,7 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         Map<String, Boolean> federation1Map = new HashMap<>();
         Map<String, Boolean> federation2Map = new HashMap<>();
 
-        // This resource is already shared in federation1, but we won't to make sure that its bartering status will change
+        // This resource is already shared in federation1, but we want to make sure that its bartering status will change
         federation1Map.put(actuatorInternalId, false);
 
         federation2Map.put(actuatorInternalId, false);
@@ -212,8 +219,8 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
 
         // Check what it is received
         assertEquals(2, sharingResourcesResult.size());
-        assertEquals(2, sharingResourcesResult.get(0).getFederationInfo().size());
-        assertEquals(2, sharingResourcesResult.get(1).getFederationInfo().size());
+        assertEquals(2, sharingResourcesResult.get(0).getFederationInfo().getSharingInformation().size());
+        assertEquals(2, sharingResourcesResult.get(1).getFederationInfo().getSharingInformation().size());
 
         CloudResource actuator = sharingResourcesResult.get(0).getResource() instanceof Actuator ?
                 sharingResourcesResult.get(0) : sharingResourcesResult.get(1);
@@ -224,20 +231,35 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         assertTrue(actuator.getResource() instanceof Actuator);
         assertTrue(service.getResource() instanceof Service);
 
-        String actuatorIdFed1 = actuator.getFederationInfo().get(federation1).getSymbioteId();
-        String actuatorIdFed2 = actuator.getFederationInfo().get(federation2).getSymbioteId();
-        String serviceIdFed2 = service.getFederationInfo().get(federation2).getSymbioteId();
+        String stationarySensorIdFed = registrationResult.get(0).getFederationInfo().getSymbioteId();
+        String actuatorIdFed = registrationResult.get(1).getFederationInfo().getSymbioteId();
+        String serviceIdFed = registrationResult.get(2).getFederationInfo().getSymbioteId();
 
         // Check what is stored in the databases
-        List<CloudResource> storedCloudResources = cloudResourceRepository.findAll();
-        assertEquals(3, storedCloudResources.size());
-        assertEquals(2, storedCloudResources.get(0).getFederationInfo().size());
-        assertEquals(2, storedCloudResources.get(1).getFederationInfo().size());
-        assertEquals(2, storedCloudResources.get(2).getFederationInfo().size());
-
         List<FederatedResource> storedFederatedResources = resourceRepository.findAll();
-        assertEquals(6, storedFederatedResources.size());
+        assertEquals(3, storedFederatedResources.size());
 
+        // We did not change anything on this resource
+        FederatedResource stationarySensorFed = resourceRepository.findOne(stationarySensorIdFed);
+        assertEquals(2, stationarySensorFed.getFederations().size());
+        assertTrue(stationarySensorFed.getFederations().containsAll(Arrays.asList(federation1, federation2)));
+        assertEquals(2, stationarySensorFed.getCloudResource().getFederationInfo().getSharingInformation().size());
+        assertTrue(stationarySensorFed.getCloudResource().getFederationInfo().getSharingInformation().get(federation1).getBartering());
+        assertFalse(stationarySensorFed.getCloudResource().getFederationInfo().getSharingInformation().get(federation2).getBartering());
+
+        FederatedResource actuatorFed = resourceRepository.findOne(actuatorIdFed);
+        assertEquals(2, actuatorFed.getFederations().size());
+        assertTrue(actuatorFed.getFederations().containsAll(Arrays.asList(federation1, federation2)));
+        assertEquals(2, actuatorFed.getCloudResource().getFederationInfo().getSharingInformation().size());
+        assertFalse(actuatorFed.getCloudResource().getFederationInfo().getSharingInformation().get(federation1).getBartering());
+        assertFalse(actuatorFed.getCloudResource().getFederationInfo().getSharingInformation().get(federation2).getBartering());
+
+        FederatedResource serviceFed = resourceRepository.findOne(serviceIdFed);
+        assertEquals(2, serviceFed.getFederations().size());
+        assertTrue(serviceFed.getFederations().containsAll(Arrays.asList(federation1, federation2)));
+        assertEquals(2, serviceFed.getCloudResource().getFederationInfo().getSharingInformation().size());
+        assertTrue(serviceFed.getCloudResource().getFederationInfo().getSharingInformation().get(federation1).getBartering());
+        assertTrue(serviceFed.getCloudResource().getFederationInfo().getSharingInformation().get(federation2).getBartering());
 
         // Check what dummySubscriptionManagerListener received
         while (dummySubscriptionManagerListener.getResourcesAddedOrUpdatedMessages().size() < 2)
@@ -248,9 +270,9 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         List<FederatedResource> message = dummySubscriptionManagerListener
                 .getResourcesAddedOrUpdatedMessages().get(1).getNewFederatedResources();
 
-        assertEquals(3, message.size());
-        assertTrue(message.stream().map(FederatedResource::getId).collect(Collectors.toList()).containsAll(
-                Arrays.asList(actuatorIdFed1, actuatorIdFed2, serviceIdFed2)
+        assertEquals(2, message.size());
+        assertTrue(message.stream().map(FederatedResource::getSymbioteId).collect(Collectors.toList()).containsAll(
+                Arrays.asList(actuatorIdFed, serviceIdFed)
         ));
     }
 
@@ -262,19 +284,20 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         List<CloudResource> registrationResult = addOrUpdateResources(cloudResources);
         assertNotNull(registrationResult);
 
-        String stationarySensorIdFed1 = registrationResult.get(0).getFederationInfo().get(federation1).getSymbioteId();
-        String actuatorIdFed1 = registrationResult.get(1).getFederationInfo().get(federation1).getSymbioteId();
+        String stationarySensorIdFed = registrationResult.get(0).getFederationInfo().getSymbioteId();
+        String actuatorIdFed = registrationResult.get(1).getFederationInfo().getSymbioteId();
+        String serviceIdFed = registrationResult.get(2).getFederationInfo().getSymbioteId();
 
-        // Construct share resources message
+        // Construct the unshare resources message
         Map<String, List<String>> resourcesToBeUnshared = new HashMap<>();
         List<String> federation1List = new ArrayList<>();
         List<String> federation2List = new ArrayList<>();
 
-        // These resources are exposed to federation1
+        // These resources are shared to federation1 and we want to unshare them
         federation1List.add(stationarySensorInternalId);
         federation1List.add(actuatorInternalId);
 
-        // This resource is not exposed to federation2, but we include it to make sure that it does not break things
+        // This resource is not shared to federation2, but we include it to make sure that it does not break things
         federation2List.add(actuatorInternalId);
 
         resourcesToBeUnshared.put(federation1, federation1List);
@@ -285,8 +308,8 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
 
         // Check what it is received
         assertEquals(2, unsharingResourcesResult.size());
-        assertEquals(1, unsharingResourcesResult.get(0).getFederationInfo().size());
-        assertEquals(0, unsharingResourcesResult.get(1).getFederationInfo().size());
+        assertEquals(1, unsharingResourcesResult.get(0).getFederationInfo().getSharingInformation().size());
+        assertEquals(0, unsharingResourcesResult.get(1).getFederationInfo().getSharingInformation().size());
 
         CloudResource stationarySensor = unsharingResourcesResult.get(0).getResource() instanceof StationarySensor ?
                 unsharingResourcesResult.get(0) : unsharingResourcesResult.get(1);
@@ -299,15 +322,25 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         assertTrue(actuator.getResource() instanceof Actuator);
 
         // Check what is stored in the databases
-        List<CloudResource> storedCloudResources = cloudResourceRepository.findAll();
-        assertEquals(3, storedCloudResources.size());
-        assertEquals(1, storedCloudResources.get(0).getFederationInfo().size());
-        assertEquals(0, storedCloudResources.get(1).getFederationInfo().size());
-        assertEquals(1, storedCloudResources.get(2).getFederationInfo().size());
-
         List<FederatedResource> storedFederatedResources = resourceRepository.findAll();
-        assertEquals(2, storedFederatedResources.size());
+        assertEquals(3, storedFederatedResources.size());
 
+        FederatedResource stationarySensorFed = resourceRepository.findOne(stationarySensorIdFed);
+        assertEquals(1, stationarySensorFed.getFederations().size());
+        assertTrue(stationarySensorFed.getFederations().contains(federation2));
+        assertEquals(1, stationarySensorFed.getCloudResource().getFederationInfo().getSharingInformation().size());
+        assertFalse(stationarySensorFed.getCloudResource().getFederationInfo().getSharingInformation().get(federation2).getBartering());
+
+        FederatedResource actuatorFed = resourceRepository.findOne(actuatorIdFed);
+        assertEquals(0, actuatorFed.getFederations().size());
+        assertEquals(0, actuatorFed.getCloudResource().getFederationInfo().getSharingInformation().size());
+
+        // We did not change anything on this resource
+        FederatedResource serviceFed = resourceRepository.findOne(serviceIdFed);
+        assertEquals(1, serviceFed.getFederations().size());
+        assertTrue(serviceFed.getFederations().contains(federation1));
+        assertEquals(1, serviceFed.getCloudResource().getFederationInfo().getSharingInformation().size());
+        assertTrue(serviceFed.getCloudResource().getFederationInfo().getSharingInformation().get(federation1).getBartering());
 
         // Check what dummySubscriptionManagerListener received
         while (dummySubscriptionManagerListener.getResourcesDeletedMessages().size() < 1)
@@ -315,10 +348,13 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
 
 
         assertEquals(1, dummySubscriptionManagerListener.getResourcesDeletedMessages().size());
-        List<String> message = dummySubscriptionManagerListener
-                .getResourcesDeletedMessages().get(0).getDeletedIds();
+        Map<String, Set<String>> message = dummySubscriptionManagerListener
+                .getResourcesDeletedMessages().get(0).getDeletedFederatedResourcesMap();
 
         assertEquals(2, message.size());
-        assertTrue(message.containsAll(Arrays.asList(stationarySensorIdFed1, actuatorIdFed1)));
+        assertEquals(1, message.get(stationarySensorIdFed).size());
+        assertTrue(message.get(stationarySensorIdFed).contains(federation1));
+        assertEquals(1, message.get(actuatorIdFed).size());
+        assertTrue(message.get(actuatorIdFed).contains(federation1));
     }
 }

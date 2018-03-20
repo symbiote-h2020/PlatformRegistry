@@ -22,7 +22,6 @@ import org.springframework.util.Assert;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Handles the authentication and authorization procedures. This class is used as a wrapper around ComponentSecurityHandler.
@@ -85,7 +84,7 @@ public class AuthorizationService {
     }
 
     /**
-     * Checks if the client has appropriate access rights to ge the list of the registered resources.
+     * Checks if the client has appropriate access rights to get the list of the registered resources.
      *
      * @return if the status of the returned ResponseEntity is OK, then the client has sufficient access rights.
      * Otherwise, the body includes some indication of the failure
@@ -139,7 +138,7 @@ public class AuthorizationService {
      * Generates a service response to be included in the response to the client, so that the server can be authenticated.
      *
      * @return if the status of the returned ResponseEntity is OK, then the service response was successfully created and
-     * it is contained in the body. Otherwise, the body includes some indication of the failure
+     * it is contained in the body. Otherwise, the body includes some indication of the failure.
      */
     public ResponseEntity generateServiceResponse() {
         if (securityEnabled) {

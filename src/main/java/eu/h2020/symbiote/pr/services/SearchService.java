@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
+ * This service handles the search HTTP requests.
+ *
  * @author Vasileios Glykantzis (ICOM)
  * @since 2/22/2018.
  */
@@ -40,34 +42,22 @@ public class SearchService {
             return securityChecks;
 
         List<FederatedResource> resources = resourceRepository.findAll();
-        FederationSearchResult response = new FederationSearchResult();
-
-        for (FederatedResource federatedResource : resources) {
-            // Add the resource id here for backwards compatibility with L1
-            federatedResource.getResource().setId(federatedResource.getId());
-            response.addFederationResourceResult(federatedResource);
-        }
+        FederationSearchResult response = new FederationSearchResult(resources);
 
         return AuthorizationServiceHelper.addSecurityService(response, new HttpHeaders(),
                 HttpStatus.OK, (String) securityChecks.getBody());
     }
 
     public ResponseEntity listFederationResources(HttpHeaders httpHeaders, String federationId) {
-        log.trace("listResources request");
+        log.trace("listFederationResources request");
 
         ResponseEntity securityChecks = AuthorizationServiceHelper.checkSecurityRequestAndCreateServiceResponse(
                 authorizationService, httpHeaders);
         if (securityChecks.getStatusCode() != HttpStatus.OK)
             return securityChecks;
 
-        List<FederatedResource> resources = resourceRepository.findByFederationId(federationId);
-        FederationSearchResult response = new FederationSearchResult();
-
-        for (FederatedResource federatedResource : resources) {
-            // Add the resource id here for backwards compatibility with L1
-            federatedResource.getResource().setId(federatedResource.getId());
-            response.addFederationResourceResult(federatedResource);
-        }
+        List<FederatedResource> resources = resourceRepository.findAllByFederationsContaining(federationId);
+        FederationSearchResult response = new FederationSearchResult(resources);
 
         return AuthorizationServiceHelper.addSecurityService(response, new HttpHeaders(),
                 HttpStatus.OK, (String) securityChecks.getBody());

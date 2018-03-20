@@ -2,7 +2,7 @@ package eu.h2020.symbiote.pr.communication.rabbit;
 
 import eu.h2020.symbiote.cloud.model.internal.ResourcesAddedOrUpdatedMessage;
 import eu.h2020.symbiote.cloud.model.internal.ResourcesDeletedMessage;
-import eu.h2020.symbiote.pr.services.ResourceService;
+import eu.h2020.symbiote.pr.services.SubscriptionManagerService;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
+ * This class is used as a simple listener.
+ *
  * @author Vasileios Glykantzis (ICOM)
  * @since 2/20/2018.
  */
@@ -21,11 +23,11 @@ import org.springframework.stereotype.Component;
 public class SubscriptionManagerListener {
     private static Log log = LogFactory.getLog(SubscriptionManagerListener.class);
 
-    private ResourceService resourceService;
+    private SubscriptionManagerService subscriptionManagerService;
 
     @Autowired
-    public SubscriptionManagerListener(ResourceService resourceService) {
-        this.resourceService = resourceService;
+    public SubscriptionManagerListener(SubscriptionManagerService subscriptionManagerService) {
+        this.subscriptionManagerService = subscriptionManagerService;
     }
 
     /**
@@ -54,12 +56,17 @@ public class SubscriptionManagerListener {
 
         // ToDo: rework this to return proper error messages and/or do not requeue the request
         try {
-            resourceService.addOrUpdateFederationResources(resourcesAddedOrUpdated);
+            subscriptionManagerService.addOrUpdateFederationResources(resourcesAddedOrUpdated);
         } catch (Exception e) {
             log.info("Exception thrown during saving federated resources", e);
         }
     }
 
+
+    /**
+     * Spring AMQP Listener for listening to new FederationResources delete events from Subscription Manager.
+     * @param resourcesDeleted message received from Subscription Manager
+     */
     @RabbitListener(
             bindings = @QueueBinding(
                     value = @Queue(
@@ -82,7 +89,7 @@ public class SubscriptionManagerListener {
 
         // ToDo: rework this to return proper error messages and/or do not requeue the request
         try {
-            resourceService.removeFederationResources(resourcesDeleted);
+            subscriptionManagerService.removeFederationResources(resourcesDeleted);
         } catch (Exception e) {
             log.info("Exception thrown during removing federated resources", e);
         }

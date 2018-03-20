@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.pr;
 
+import eu.h2020.symbiote.pr.constants.Constants;
 import eu.h2020.symbiote.pr.model.PersistentVariable;
 import eu.h2020.symbiote.pr.repositories.PersistentVariableRepository;
 import org.apache.commons.logging.Log;
@@ -12,9 +13,14 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.Bean;
 
+
+@EnableDiscoveryClient
+@EnableAutoConfiguration
 @SpringBootApplication
 public class PlatformRegistryApplication {
 
@@ -50,6 +56,7 @@ public class PlatformRegistryApplication {
         }
 
     }
+
     @Bean
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();

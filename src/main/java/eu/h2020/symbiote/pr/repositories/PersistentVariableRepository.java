@@ -10,5 +10,5 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
  */
 @RepositoryRestResource(collectionResourceRel = "persistentVariables", path = "persistentVariables")
 public interface PersistentVariableRepository extends MongoRepository<PersistentVariable, String> {
-    public PersistentVariable findByVariableName(String variableName);
+
 }

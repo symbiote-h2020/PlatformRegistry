@@ -10,6 +10,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 /**
+ * Controller for handling HTTP requests
+ *
  * @author Vasileios Glykantzis (ICOM)
  * @since 2/22/2018.
  */

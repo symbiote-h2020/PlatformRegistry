@@ -50,18 +50,18 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         resourceRepository.save(federatedResourceList);
 
         String stationarySensorODataUrl = "https://stationarySensor.com/rap/Sensors('"
-                + federatedResourceList.get(0).getId() + "')";
+                + federatedResourceList.get(0).getSymbioteId() + "')";
         String actuatorODataUrl = "https://actuator.com/rap/Actuators('"
-                + federatedResourceList.get(1).getId() + "')";
+                + federatedResourceList.get(1).getSymbioteId() + "')";
         String serviceODataUrl = "https://service.com/rap/Services('"
-                + federatedResourceList.get(2).getId() + "')";
+                + federatedResourceList.get(2).getSymbioteId() + "')";
 
         String stationarySensorRestUrl = "https://stationarySensor.com/rap/Sensor/"
-                + federatedResourceList.get(0).getId();
+                + federatedResourceList.get(0).getSymbioteId();
         String actuatorRestUrl = "https://actuator.com/rap/Actuator/"
-                + federatedResourceList.get(1).getId();
+                + federatedResourceList.get(1).getSymbioteId();
         String serviceRestUrl = "https://service.com/rap/Service/"
-                + federatedResourceList.get(2).getId();
+                + federatedResourceList.get(2).getSymbioteId();
 
         // Sleep to make sure that the repo has been updated before querying
         TimeUnit.MILLISECONDS.sleep(500);
@@ -75,11 +75,11 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(3)))
-                .andExpect(jsonPath("$.resources[*].resource.id",
+                .andExpect(jsonPath("$.resources[*].symbioteId",
                         contains(
-                                federatedResourceList.get(0).getId(),
-                                federatedResourceList.get(1).getId(),
-                                federatedResourceList.get(2).getId()
+                                federatedResourceList.get(0).getSymbioteId(),
+                                federatedResourceList.get(1).getSymbioteId(),
+                                federatedResourceList.get(2).getSymbioteId()
                         )))
                 .andExpect(jsonPath("$.resources[*].oDataUrl",
                         contains(
@@ -101,14 +101,10 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         resourceRepository.save(federatedResourceList);
 
         String stationarySensorODataUrl = "https://stationarySensor.com/rap/Sensors('"
-                + federatedResourceList.get(0).getId() + "')";
-        String serviceODataUrl = "https://service.com/rap/Services('"
-                + federatedResourceList.get(2).getId() + "')";
+                + federatedResourceList.get(0).getSymbioteId() + "')";
 
         String stationarySensorRestUrl = "https://stationarySensor.com/rap/Sensor/"
-                + federatedResourceList.get(0).getId();
-        String serviceRestUrl = "https://service.com/rap/Service/"
-                + federatedResourceList.get(2).getId();
+                + federatedResourceList.get(0).getSymbioteId();
 
         // Sleep to make sure that the repo has been updated before querying
         TimeUnit.MILLISECONDS.sleep(500);
@@ -118,24 +114,15 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         doReturn(new ResponseEntity<>(HttpStatus.OK))
                 .when(authorizationService).checkListResourcesRequest(any(), any());
 
-        mockMvc.perform(get("/pr/list_federation_resources/fed1"))
+        mockMvc.perform(get("/pr/list_federation_resources/" + federation2))
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
-                .andExpect(jsonPath("$.resources", hasSize(2)))
-                .andExpect(jsonPath("$.resources[*].resource.id",
-                        contains(
-                                federatedResourceList.get(0).getId(),
-                                federatedResourceList.get(2).getId()
-                        )))
+                .andExpect(jsonPath("$.resources", hasSize(1)))
+                .andExpect(jsonPath("$.resources[*].symbioteId",
+                        contains(federatedResourceList.get(0).getSymbioteId())))
                 .andExpect(jsonPath("$.resources[*].oDataUrl",
-                        contains(
-                                stationarySensorODataUrl,
-                                serviceODataUrl
-                        )))
+                        contains(stationarySensorODataUrl)))
                 .andExpect(jsonPath("$.resources[*].restUrl",
-                        contains(
-                                stationarySensorRestUrl,
-                                serviceRestUrl)
-                ));
+                        contains(stationarySensorRestUrl)));
     }
 }

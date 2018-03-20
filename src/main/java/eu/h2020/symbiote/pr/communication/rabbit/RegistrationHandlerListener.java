@@ -1,7 +1,7 @@
 package eu.h2020.symbiote.pr.communication.rabbit;
 
 import eu.h2020.symbiote.cloud.model.internal.CloudResource;
-import eu.h2020.symbiote.pr.services.ResourceService;
+import eu.h2020.symbiote.pr.services.RegistrationHandlerService;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * This class is used as a simple listener.
+ *
  * @author Vasileios Glykantzis (ICOM)
  * @since 2/20/2018.
  */
@@ -24,18 +26,18 @@ import java.util.Map;
 public class RegistrationHandlerListener {
     private static Log log = LogFactory.getLog(RegistrationHandlerListener.class);
 
-    private ResourceService resourceService;
+    private RegistrationHandlerService registrationHandlerService;
 
     @Autowired
-    public RegistrationHandlerListener(ResourceService resourceService) {
-        this.resourceService = resourceService;
+    public RegistrationHandlerListener(RegistrationHandlerService registrationHandlerService) {
+        this.registrationHandlerService = registrationHandlerService;
     }
 
     /**
      * Spring AMQP Listener for Resource Registration requests from Registration Handler.
      *
-     * @param cloudResources a list of resource add or update requests coming from Registration Handler
-     * @return a list of the new/updated CloudResources
+     * @param cloudResources a list of add or update requests coming from Registration Handler
+     * @return a list of the newly registered/updated CloudResources
      */
     @RabbitListener(
             bindings = @QueueBinding(
@@ -59,7 +61,7 @@ public class RegistrationHandlerListener {
 
         // ToDo: rework this to return proper error messages and/or do not requeue the request
         try {
-            return resourceService.addOrUpdatePlatformResources(cloudResources);
+            return registrationHandlerService.addOrUpdatePlatformResources(cloudResources);
         } catch (Exception e) {
             log.info("Exception thrown during saving platform resources", e);
         }
@@ -95,7 +97,7 @@ public class RegistrationHandlerListener {
 
         // ToDo: rework this to return proper error messages and/or do not requeue the request
         try {
-            return resourceService.removePlatformResources(internalIds);
+            return registrationHandlerService.removePlatformResources(internalIds);
         } catch (Exception e) {
             log.info("Exception thrown during removing platform resources", e);
         }
@@ -132,7 +134,7 @@ public class RegistrationHandlerListener {
 
         // ToDo: rework this to return proper error messages and/or do not requeue the request
         try {
-            return resourceService.shareResources(resourcesToBeShared);
+            return registrationHandlerService.shareResources(resourcesToBeShared);
         } catch (Exception e) {
             log.info("Exception thrown during sharing platform resources", e);
         }
@@ -169,7 +171,7 @@ public class RegistrationHandlerListener {
 
         // ToDo: rework this to return proper error messages and/or do not requeue the request
         try {
-            return resourceService.unshareResources(resourcesToBeUnshared);
+            return registrationHandlerService.unshareResources(resourcesToBeUnshared);
         } catch (Exception e) {
             log.info("Exception thrown during unsharing platform resources", e);
         }
