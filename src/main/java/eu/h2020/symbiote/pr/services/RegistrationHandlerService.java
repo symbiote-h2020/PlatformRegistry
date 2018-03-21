@@ -367,8 +367,6 @@ public class RegistrationHandlerService {
 
         // If found, clear any sensitive platform data
         federatedResource.clearPrivateInfo();
-        federatedResource.getCloudResource().setFederationInfo(new FederationInfoBean());
-
         return federatedResource;
     }
 
