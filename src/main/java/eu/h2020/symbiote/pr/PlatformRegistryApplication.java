@@ -2,7 +2,6 @@ package eu.h2020.symbiote.pr;
 
 import eu.h2020.symbiote.pr.constants.Constants;
 import eu.h2020.symbiote.pr.model.PersistentVariable;
-import eu.h2020.symbiote.pr.repositories.PersistentVariableRepository;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
@@ -26,9 +25,6 @@ public class PlatformRegistryApplication {
 
     private static Log log = LogFactory.getLog(PlatformRegistryApplication.class);
 
-    @Autowired
-    private PersistentVariableRepository persistentVariableRepository;
-
     @Value("${rabbit.host}")
     private String rabbitMQHostIP;
 
@@ -40,21 +36,6 @@ public class PlatformRegistryApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(PlatformRegistryApplication.class, args);
-    }
-
-    @Bean
-    public PersistentVariable idSequence() {
-        PersistentVariable idSequence = persistentVariableRepository.findOne(Constants.ID_SEQUENCE);
-
-        if (idSequence == null) {
-            log.info("No idSequence was saved in Database");
-            return new PersistentVariable(Constants.ID_SEQUENCE, 0L);
-        }
-        else {
-            log.info("Current idSequence stored in Database = " + idSequence.getValue());
-            return idSequence;
-        }
-
     }
 
     @Bean

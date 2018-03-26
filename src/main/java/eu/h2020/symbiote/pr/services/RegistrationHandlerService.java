@@ -3,8 +3,6 @@ package eu.h2020.symbiote.pr.services;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.cloud.model.internal.*;
-import eu.h2020.symbiote.pr.model.PersistentVariable;
-import eu.h2020.symbiote.pr.repositories.PersistentVariableRepository;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import io.jsonwebtoken.lang.Assert;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
@@ -29,8 +27,6 @@ public class RegistrationHandlerService {
 
     private ResourceRepository resourceRepository;
     private RabbitTemplate rabbitTemplate;
-    private PersistentVariableRepository persistentVariableRepository;
-    private PersistentVariable idSequence;
     private String platformId;
     private String subscriptionManagerExchange;
     private String smAddOrUpdateFederatedResourcesKey;
@@ -40,8 +36,6 @@ public class RegistrationHandlerService {
     @Autowired
     public RegistrationHandlerService(ResourceRepository resourceRepository,
                                       RabbitTemplate rabbitTemplate,
-                                      PersistentVariableRepository persistentVariableRepository,
-                                      PersistentVariable idSequence,
                                       @Value("${platform.id}") String platformId,
                                       @Value("${rabbit.exchange.subscriptionManager.name}")
                                                   String subscriptionManagerExchange,
@@ -52,8 +46,6 @@ public class RegistrationHandlerService {
 
         this.resourceRepository = resourceRepository;
         this.rabbitTemplate = rabbitTemplate;
-        this.persistentVariableRepository = persistentVariableRepository;
-        this.idSequence = idSequence;
 
         Assert.notNull(platformId, "The platformId should not be null");
         this.platformId = platformId;
@@ -123,7 +115,6 @@ public class RegistrationHandlerService {
 
 
         resourceRepository.save(resourcesToSave);
-        persistentVariableRepository.save(idSequence);
 
         return cloudResources;
     }
@@ -336,9 +327,22 @@ public class RegistrationHandlerService {
     }
 
     private String createNewResourceId() {
-        long id = (Long) idSequence.getValue();
-        idSequence.setValue(id + 1);
-        return String.format("%0" + Long.BYTES * 2 + "x@%s", id, platformId);
+
+        //create a randomly generated long number
+        long id = UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE;
+
+        //cast it to check if it already exists in the database
+        Set<String> ids = new HashSet<>();
+        ids.add(String.format("%0" + Long.BYTES * 2 +"x@%s", id, platformId));
+
+        //in case of collision, create a new id until it is unique
+        while(resourceRepository.findAllBySymbioteIdIn(ids).size()>0) {
+            id = UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE;
+            ids.clear();
+            ids.add(String.format( "%0" + Long.BYTES * 2 +"x@%s", id, platformId));
+        }
+
+        return String.format( "%0" + Long.BYTES * 2 +"x@%s", id, platformId);
     }
 
     private FederatedResource getFederatedResource(FederatedResource storedFederatedResource,

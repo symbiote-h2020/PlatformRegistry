@@ -12,7 +12,6 @@ import eu.h2020.symbiote.model.cim.Service;
 import eu.h2020.symbiote.model.cim.StationarySensor;
 import eu.h2020.symbiote.pr.dummyListeners.DummySubscriptionManagerListener;
 import eu.h2020.symbiote.pr.model.PersistentVariable;
-import eu.h2020.symbiote.pr.repositories.PersistentVariableRepository;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import eu.h2020.symbiote.pr.services.AuthorizationService;
 import org.apache.commons.logging.Log;
@@ -29,6 +28,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -56,13 +56,7 @@ public abstract class PlatformRegistryBaseTestClass {
     protected ResourceRepository resourceRepository;
 
     @Autowired
-    protected PersistentVariableRepository persistentVariableRepository;
-
-    @Autowired
     protected RabbitTemplate rabbitTemplate;
-
-    @Autowired
-    protected PersistentVariable idSequence;
 
     @Autowired
     protected DummySubscriptionManagerListener dummySubscriptionManagerListener;
@@ -107,7 +101,6 @@ public abstract class PlatformRegistryBaseTestClass {
     @Before
     public void setup() {
         resourceRepository.deleteAll();
-        persistentVariableRepository.deleteAll();
         dummySubscriptionManagerListener.clearLists();
 
         this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
@@ -116,7 +109,6 @@ public abstract class PlatformRegistryBaseTestClass {
     @After
     public void cleanup() {
         resourceRepository.deleteAll();
-        persistentVariableRepository.deleteAll();
     }
 
     public String createNewResourceId(long id) {
@@ -127,6 +119,21 @@ public abstract class PlatformRegistryBaseTestClass {
         return String.format("%0" + Long.BYTES * 2 + "x@%s", id, platformId);
     }
 
+    private String createNewResourceId(String platformId) {
+
+        long id = UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE;
+        assertTrue(id>0);
+        Set<String> ids = new HashSet<>();
+        ids.add(String.format("%0" + Long.BYTES * 2 +"x@%s", id, platformId));
+
+        //check it does not exist in the database
+        while(resourceRepository.findAllBySymbioteIdIn(ids).size()>0) {
+            id = UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE;//randLong.nextLong();
+            ids.clear();
+            ids.add(String.format("%0" + Long.BYTES * 2 +"x@%s", id, platformId));
+        }
+                return String.format("%0" + Long.BYTES * 2 +"x@%s", id, platformId);
+    }
 
     public List<CloudResource> createTestCloudResources() {
 
@@ -192,13 +199,36 @@ public abstract class PlatformRegistryBaseTestClass {
     }
 
     public List<FederatedResource> createTestFederatedResources(String platformId) {
-        long id = 0;
 
         List<CloudResource> cloudResources = createTestCloudResources();
 
-        FederatedResource federatedResource1 = new FederatedResource(createNewResourceId(0, platformId), cloudResources.get(0));
-        FederatedResource federatedResource2 = new FederatedResource(createNewResourceId(1, platformId), cloudResources.get(1));
-        FederatedResource federatedResource3 = new FederatedResource(createNewResourceId(2, platformId), cloudResources.get(2));
+        Set <String> existingIds=new HashSet<>();
+        Set <String> newIds=new HashSet<>();
+        String id;
+
+        id=createNewResourceId(platformId);
+        newIds.clear();
+        newIds.add(id);
+        assertTrue(resourceRepository.findAllBySymbioteIdIn(newIds).size()==0);
+        FederatedResource federatedResource1 = new FederatedResource(id, cloudResources.get(0));
+        assertTrue(!existingIds.contains(id));
+        existingIds.add(id);
+
+        id=createNewResourceId(platformId);
+        newIds.clear();
+        newIds.add(id);
+        assertTrue(resourceRepository.findAllBySymbioteIdIn(newIds).size()==0);
+        FederatedResource federatedResource2 = new FederatedResource(id, cloudResources.get(1));
+        assertTrue(!existingIds.contains(id));
+        existingIds.add(id);
+
+        id=createNewResourceId(platformId);
+        newIds.clear();
+        newIds.add(id);
+        assertTrue(resourceRepository.findAllBySymbioteIdIn(newIds).size()==0);
+        FederatedResource federatedResource3 = new FederatedResource(id, cloudResources.get(2));
+        assertTrue(!existingIds.contains(id));
+        existingIds.add(id);
 
         return new ArrayList<>(Arrays.asList(federatedResource1, federatedResource2, federatedResource3));
     }
