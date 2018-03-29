@@ -3,6 +3,7 @@ buildscript {
     ext {
         springBootVersion = '1.5.10.RELEASE'
         springCloudVersion = 'Dalston.SR5'
+        querydslVersion = '4.1.4'
     }
     repositories {
         mavenCentral()
@@ -16,6 +17,10 @@ buildscript {
 }
 
 // code
+plugins {
+    id "com.ewerk.gradle.plugins.querydsl" version "1.0.9"
+}
+
 apply plugin: "io.spring.dependency-management"
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
@@ -41,6 +46,12 @@ targetCompatibility = 1.8
 repositories {
     mavenCentral()
     maven { url "https://jitpack.io" }
+}
+
+idea {
+    module {
+        sourceDirs += file('generated/')
+    }
 }
 
 // Spring related configs
@@ -84,11 +95,25 @@ dependencies {
     compile('org.springframework.amqp:spring-rabbit')
     compile('org.springframework.boot:spring-boot-starter-data-rest')
     compile('org.springframework.boot:spring-boot-starter-data-mongodb')
+    //compile('org.springframework.boot:spring-boot-starter-data-jpa')
+
+    // querydsl
+    compile("com.querydsl:querydsl-mongodb:${querydslVersion}")
+    compile("com.querydsl:querydsl-apt:${querydslVersion}")
 
     // Test only
     testCompile('junit:junit:4.+')
     testCompile('org.springframework.boot:spring-boot-starter-test')
 
+}
+
+clean {
+    delete "${rootDir}/generated/"
+}
+
+querydsl {
+    querydslSourcesDir = 'generated/src/querydsl/java'
+    springDataMongo = true
 }
 
 // code quality below
