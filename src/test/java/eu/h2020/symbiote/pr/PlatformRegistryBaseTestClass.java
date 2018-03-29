@@ -6,12 +6,8 @@ import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
 import eu.h2020.symbiote.cloud.model.internal.FederationInfoBean;
 import eu.h2020.symbiote.cloud.model.internal.ResourceSharingInformation;
-import eu.h2020.symbiote.model.cim.Actuator;
-import eu.h2020.symbiote.model.cim.Resource;
-import eu.h2020.symbiote.model.cim.Service;
-import eu.h2020.symbiote.model.cim.StationarySensor;
+import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.pr.dummyListeners.DummySubscriptionManagerListener;
-import eu.h2020.symbiote.pr.model.PersistentVariable;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import eu.h2020.symbiote.pr.services.AuthorizationService;
 import org.apache.commons.logging.Log;
@@ -32,7 +28,6 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Vasileios Glykantzis (ICOM)
@@ -238,6 +233,7 @@ public abstract class PlatformRegistryBaseTestClass {
 
         // Create 1st resource
         StationarySensor stationarySensor = new StationarySensor();
+        stationarySensor.setLocatedAt(new WGS84Location(1.0, 1.0, 1.0, "location1", Arrays.asList("locationDescription1")));
         stationarySensor.setName("stationarySensor");
         stationarySensor.setDescription(Collections.singletonList("sensor1Description"));
         stationarySensor.setInterworkingServiceURL("https://stationarySensor.com");
@@ -248,6 +244,7 @@ public abstract class PlatformRegistryBaseTestClass {
         Actuator actuator = new Actuator();
         actuator.setName("actuator");
         actuator.setInterworkingServiceURL("https://actuator.com");
+        actuator.setLocatedAt(new WGS84Location(2.0, 2.0, 2.0, "location2", Arrays.asList("locationDescription2")));
         resources.add(actuator);
 
         // Create 3rd resource

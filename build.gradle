@@ -1,8 +1,9 @@
 // initial extensions to gradle
 buildscript {
     ext {
-        springBootVersion = '1.5.12.RELEASE'
+        springBootVersion = '1.5.13.RELEASE'
         springCloudVersion = 'Dalston.SR5'
+        querydslVersion = '4.1.4'
     }
     repositories {
         mavenCentral()
@@ -16,6 +17,10 @@ buildscript {
 }
 
 // code
+plugins {
+    id "com.ewerk.gradle.plugins.querydsl" version "1.0.9"
+}
+
 apply plugin: "io.spring.dependency-management"
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
@@ -42,6 +47,13 @@ targetCompatibility = 1.8
 repositories {
     mavenCentral()
     maven { url "https://jitpack.io" }
+}
+
+idea {
+    module {
+        sourceDirs += file('generated/')
+        // generatedSourceDirs += file('generated/')
+    }
 }
 
 // Spring related configs
@@ -75,7 +87,8 @@ dependencies {
             4) never commit build.gradle which has project dependencies active as it will break CI builds
     */
 
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.12+') { changing = true }
+
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.14+') { changing = true }
 
     // Spring
     compile('org.springframework.cloud:spring-cloud-starter-config')
@@ -87,6 +100,10 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-data-mongodb')
     compile('org.springframework.retry:spring-retry')
     compile('org.springframework.boot:spring-boot-starter-aop')
+
+    // querydsl
+    compile("com.querydsl:querydsl-mongodb:${querydslVersion}")
+    compile("com.querydsl:querydsl-apt:${querydslVersion}")
 
     // Test only
     testCompile('junit:junit:4.+')
@@ -105,6 +122,16 @@ bootRepackage {
 }
 
 
+clean {
+    delete "${rootDir}/generated/"
+}
+
+querydsl {
+    querydslSourcesDir = 'generated/src/querydsl/java'
+    springDataMongo = true
+}
+
+// code quality below
 task generateJavaDocs(type: Javadoc) {
     source = sourceSets.main.allJava
     destinationDir = reporting.file("javadocs")
