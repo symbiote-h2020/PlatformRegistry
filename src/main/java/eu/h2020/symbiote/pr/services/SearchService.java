@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.pr.services;
 
+import com.querydsl.core.types.Predicate;
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
 import eu.h2020.symbiote.cloud.model.internal.FederationSearchResult;
 import eu.h2020.symbiote.pr.helpers.AuthorizationServiceHelper;
@@ -31,6 +32,22 @@ public class SearchService {
     public SearchService(ResourceRepository resourceRepository, AuthorizationService authorizationService) {
         this.resourceRepository = resourceRepository;
         this.authorizationService = authorizationService;
+    }
+
+
+    public ResponseEntity listPredicate(HttpHeaders httpHeaders, Predicate p) {
+        log.trace("listFederationResources request");
+
+        ResponseEntity securityChecks = AuthorizationServiceHelper.checkSecurityRequestAndCreateServiceResponse(
+                authorizationService, httpHeaders);
+        if (securityChecks.getStatusCode() != HttpStatus.OK)
+            return securityChecks;
+
+        List<FederatedResource> resources = resourceRepository.findAll(p);
+
+        FederationSearchResult response = new FederationSearchResult(resources);
+        return AuthorizationServiceHelper.addSecurityService(response, new HttpHeaders(),
+                HttpStatus.OK, (String) securityChecks.getBody());
     }
 
     public ResponseEntity listResources(HttpHeaders httpHeaders) {

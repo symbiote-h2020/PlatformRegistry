@@ -1,15 +1,12 @@
 package eu.h2020.symbiote.pr;
 
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
-import eu.h2020.symbiote.pr.model.QUser;
 import eu.h2020.symbiote.security.commons.SecurityConstants;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Matchers.any;
@@ -126,4 +123,50 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
                 .andExpect(jsonPath("$.resources[*].restUrl",
                         contains(stationarySensorRestUrl)));
     }
+
+    @Test
+    public void listResourcesInPredicateBySymbioteIdSuccessfulTest() throws Exception {
+        List<FederatedResource> federatedResourceList = createTestFederatedResources(platformId);
+        resourceRepository.save(federatedResourceList);
+
+        String stationarySensorODataUrl = "https://stationarySensor.com/rap/Sensors('"
+                + federatedResourceList.get(0).getSymbioteId() + "')";
+
+        String stationarySensorRestUrl = "https://stationarySensor.com/rap/Sensor/"
+                + federatedResourceList.get(0).getSymbioteId();
+
+        // Sleep to make sure that the repo has been updated before querying
+        TimeUnit.MILLISECONDS.sleep(500);
+
+        doReturn(new ResponseEntity<>(serviceResponse, HttpStatus.OK))
+                .when(authorizationService).generateServiceResponse();
+        doReturn(new ResponseEntity<>(HttpStatus.OK))
+                .when(authorizationService).checkListResourcesRequest(any(), any());
+
+        String symbId = federatedResourceList.get(0).getSymbioteId();
+        String fed1 = "fed1";
+        String fed2 = "fed2";
+       String predicate="?federatedResourceId="+symbId+"&federationId="+fed1+"&federationId="+fed2;
+        //String predicate="?federationId="+fed;
+        // String predicate="?symbioteId="+symbId;
+        //String predicate="?oDataUrl="+stationarySensorODataUrl;
+        // String predicate="?symbioteId="+symbId+"&oDataUrl="+stationarySensorODataUrl;
+
+        mockMvc.perform(get("/pr/list_resources_in_predicate/" + predicate))
+                .andExpect(status().isOk())
+                .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
+                .andExpect(jsonPath("$.resources", hasSize(1)))
+                .andExpect(jsonPath("$.resources[*].symbioteId",
+                        contains(federatedResourceList.get(0).getSymbioteId()
+                        )))
+                .andExpect(jsonPath("$.resources[*].oDataUrl",
+                        contains(
+                                stationarySensorODataUrl
+                        )))
+                .andExpect(jsonPath("$.resources[*].restUrl",
+                        contains(
+                                stationarySensorRestUrl
+                        )));
+    }
+
 }
