@@ -163,7 +163,7 @@ public class RegistrationHandlerListener {
                             autoDelete  = "${rabbit.exchange.platformRegistry.autodelete}",
                             internal = "${rabbit.exchange.platformRegistry.internal}",
                             type = "${rabbit.exchange.platformRegistry.type}"),
-                    key = "${rabbit.queueName.platformRegistry.unshare}")
+                    key = "${rabbit.routingKey.platformRegistry.unshare}")
     )
     public List<CloudResource> unshareResources(Map<String, List<String>> resourcesToBeUnshared) {
         log.trace("Received shareResources request from registration Handler: " +

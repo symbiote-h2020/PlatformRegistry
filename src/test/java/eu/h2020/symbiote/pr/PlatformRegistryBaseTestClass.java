@@ -76,7 +76,7 @@ public abstract class PlatformRegistryBaseTestClass {
     @Value("${rabbit.routingKey.platformRegistry.share}")
     protected String shareResourcesKey;
 
-    @Value("${rabbit.queueName.platformRegistry.unshare}")
+    @Value("${rabbit.routingKey.platformRegistry.unshare}")
     protected String unshareResourcesKey;
 
     @Value("${rabbit.routingKey.platformRegistry.addOrUpdateFederatedResources}")

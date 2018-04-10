@@ -76,14 +76,14 @@ public class RegistrationHandlerService {
             // if the federationInfo of the cloudResource is null, initialize it with a valid symbiote id
             if (cloudResource.getFederationInfo() == null ||
                     cloudResource.getFederationInfo().getSymbioteId() == null) {
+
+                // If federationInfo is null or the symbioteId == null that means we have a register operation
+                // So, we create the federationInfo
                 FederationInfoBean federationInfo = new FederationInfoBean();
                 federationInfo.setSymbioteId(createNewResourceId());
 
-                if (cloudResource.getFederationInfo().getSharingInformation() == null)
-                    federationInfo.setSharingInformation(new HashMap<>());
-                else {
+                if (cloudResource.getFederationInfo() != null && cloudResource.getFederationInfo().getSharingInformation() != null)
                     federationInfo.setSharingInformation(cloudResource.getFederationInfo().getSharingInformation());
-                }
 
                 cloudResource.setFederationInfo(federationInfo);
             }
@@ -96,9 +96,7 @@ public class RegistrationHandlerService {
             }
 
 
-            if (cloudResource.getFederationInfo().getSharingInformation().size() > 0)
-                resourcesToSave.add(new FederatedResource(cloudResource));
-
+            resourcesToSave.add(new FederatedResource(cloudResource));
         }
 
         // Find the federations where the resources are no longer exposed to
@@ -253,14 +251,15 @@ public class RegistrationHandlerService {
                 // This contains all the federations where the resource is shared to
                 FederatedResource storedFederatedResource = storedFederatedResources.get(internalId);
 
-                if (!resourcesToBeRemoved.containsKey(internalId))
-                    resourcesToBeRemoved.put(storedFederatedResource.getSymbioteId(), new HashSet<>());
+                if (storedFederatedResource != null) {
+                    if (!resourcesToBeRemoved.containsKey(internalId))
+                        resourcesToBeRemoved.put(storedFederatedResource.getSymbioteId(), new HashSet<>());
 
-                resourcesToBeRemoved.get(storedFederatedResource.getSymbioteId()).add(federationId);
+                    resourcesToBeRemoved.get(storedFederatedResource.getSymbioteId()).add(federationId);
 
-                // Update also this info to the storedFederation
-                storedFederatedResource.unshareFromFederation(federationId);
-
+                    // Update also this info to the storedFederation
+                    storedFederatedResource.unshareFromFederation(federationId);
+                }
             }
         }
 
