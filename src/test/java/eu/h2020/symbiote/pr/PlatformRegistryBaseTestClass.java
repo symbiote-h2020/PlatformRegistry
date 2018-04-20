@@ -6,10 +6,7 @@ import eu.h2020.symbiote.cloud.model.internal.CloudResource;
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
 import eu.h2020.symbiote.cloud.model.internal.FederationInfoBean;
 import eu.h2020.symbiote.cloud.model.internal.ResourceSharingInformation;
-import eu.h2020.symbiote.model.cim.Actuator;
-import eu.h2020.symbiote.model.cim.Resource;
-import eu.h2020.symbiote.model.cim.Service;
-import eu.h2020.symbiote.model.cim.StationarySensor;
+import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.pr.dummyListeners.DummySubscriptionManagerListener;
 import eu.h2020.symbiote.pr.model.PersistentVariable;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
@@ -238,8 +235,14 @@ public abstract class PlatformRegistryBaseTestClass {
 
         // Create 1st resource
         StationarySensor stationarySensor = new StationarySensor();
+       // Location sl = new SymbolicLocation();
+        //Location sl = new Location();
+       // sl.setName("location1");
+       // sl.setDescription(Arrays.asList("locationDescription1"));
+        //stationarySensor.setLocatedAt(sl);
+        stationarySensor.setLocatedAt(new WGS84Location(1.0, 1.0, 1.0, "location1", Arrays.asList("locationDescription1")));
         stationarySensor.setName("stationarySensor");
-        stationarySensor.setDescription(Collections.singletonList("sensor1Description"));
+        stationarySensor.setDescription(Collections.singletonList("stationarySensor"));
         stationarySensor.setInterworkingServiceURL("https://stationarySensor.com");
         stationarySensor.setObservesProperty(Arrays.asList("property1", "property2"));
         resources.add(stationarySensor);
@@ -248,6 +251,10 @@ public abstract class PlatformRegistryBaseTestClass {
         Actuator actuator = new Actuator();
         actuator.setName("actuator");
         actuator.setInterworkingServiceURL("https://actuator.com");
+        //Location sl2 = new SymbolicLocation();
+        //sl2.setName("location2");
+        //sl2.setDescription(Arrays.asList("locationDescription2"));
+        actuator.setLocatedAt(new WGS84Location(2.0, 2.0, 2.0, "location2", Arrays.asList("locationDescription2")));
         resources.add(actuator);
 
         // Create 3rd resource

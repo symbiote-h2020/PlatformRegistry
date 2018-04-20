@@ -43,7 +43,7 @@ public class SearchService {
         if (securityChecks.getStatusCode() != HttpStatus.OK)
             return securityChecks;
 
-        List<FederatedResource> resources = resourceRepository.findAll(p);
+        List<FederatedResource> resources = resourceRepository.findAll(p);//, new Sort(new Sort.Order(Sort.Direction.ASC, "federations.size()")));
 
         FederationSearchResult response = new FederationSearchResult(resources);
         return AuthorizationServiceHelper.addSecurityService(response, new HttpHeaders(),
