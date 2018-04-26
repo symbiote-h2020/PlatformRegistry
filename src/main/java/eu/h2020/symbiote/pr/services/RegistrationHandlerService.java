@@ -93,10 +93,14 @@ public class RegistrationHandlerService {
                     cloudResource.getFederationInfo().getSharingInformation().values()) {
                 if (sharingInformation.getBartering() == null)
                     sharingInformation.setBartering(false);
+                if (sharingInformation.getSharingDate() == null)
+                    sharingInformation.setSharingDate(new Date());
             }
 
 
             resourcesToSave.add(new FederatedResource(cloudResource));
+            log.debug("FederatedResource " + cloudResource.getInternalId() + " is exposed to "
+                    + cloudResource.getFederationInfo().getSharingInformation().keySet());
         }
 
         // Find the federations where the resources are no longer exposed to
@@ -187,6 +191,9 @@ public class RegistrationHandlerService {
             for (Map.Entry<String, Boolean> resourceEntry : federationEntry.getValue().entrySet()) {
                 String internalId = resourceEntry.getKey();
                 Boolean barteringStatus = resourceEntry.getValue();
+                Date sharingDate = new Date();
+
+                log.debug("Resource " + internalId + " will be shared to federation " + federationId);
 
                 // This contains all the federations where the resource is shared to
                 FederatedResource storedFederatedResource = storedFederatedResources.get(internalId);
@@ -197,10 +204,12 @@ public class RegistrationHandlerService {
                     continue;
 
                 // Add the new federation where the resource is shared to
-                federatedResource.shareToNewFederation(federationId, barteringStatus);
+                federatedResource.shareToNewFederation(federationId, barteringStatus, sharingDate);
+                log.debug("SharingDate = " + federatedResource.getCloudResource().getFederationInfo()
+                        .getSharingInformation().get(federationId).getSharingDate());
 
                 // Update also this info to the storedFederation
-                storedFederatedResource.shareToNewFederation(federationId, barteringStatus);
+                storedFederatedResource.shareToNewFederation(federationId, barteringStatus, sharingDate);
 
                 resourcesToSave.put(internalId, federatedResource);
 
