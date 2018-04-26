@@ -8,9 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -270,19 +268,19 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         doReturn(new ResponseEntity<>(HttpStatus.OK))
                 .when(authorizationService).checkListResourcesRequest(any(), any());
 
-        String resourceType = "stationarySensor";
+        String resourceType = federatedResourceList.get(0).getResourceType();//"StationarySensor";
         String predicate="?resource_type="+resourceType;
 
         mockMvc.perform(get("/pr/list_resources_in_predicate/" + predicate))
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(1)))
-                .andExpect(jsonPath("$.resources[*].cloudResource.resource.name",
-                contains(federatedResourceList.get(0).getCloudResource().getResource().getName()
-                )));
+                .andExpect(jsonPath("$.resources[*].resourceType",
+                        contains(federatedResourceList.get(0).getResourceType()
+                        )));
     }
 
-    //@Test
+    @Test
     public void listResourcesInPredicateByLocationSuccessfulTest() throws Exception {
         List<FederatedResource> federatedResourceList = createTestFederatedResources(platformId);
         resourceRepository.save(federatedResourceList);
@@ -295,19 +293,29 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         doReturn(new ResponseEntity<>(HttpStatus.OK))
                 .when(authorizationService).checkListResourcesRequest(any(), any());
 
-        Device s2 = (Device) federatedResourceList.get(0).getCloudResource().getResource();
-        String locationName=s2.getLocatedAt().getName();
-//        WGS84Location l =(WGS84Location) s2.getLocatedAt();
+  //      String locationName=federatedResourceList.get(0).getLocatedAt().getName();
+//        WGS84Location l =(WGS84Location) s.getLocatedAt();
 //        Double locationLong =l.getLongitude();
 //        Double locationLat =l.getLatitude();
-        String predicate="?location_name="+locationName;//+"&location_lat="+locationLat+"&location_long="+locationLong;
+
+        String locations[] = {federatedResourceList.get(0).getLocatedAt().getName(),
+                                federatedResourceList.get(1).getLocatedAt().getName()};
+        String locationName = String.join(",", locations);
+        String predicate="?location_name="+locationName+"&sort=locatedAt.longitude desc;";
+
+        //String predicate="?location_lat="+locationLat;
+        //String predicate="?location_long="+locationLong;
 
         mockMvc.perform(get("/pr/list_resources_in_predicate/" + predicate))
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
-                .andExpect(jsonPath("$.resources", hasSize(1)))
-                .andExpect(jsonPath("$.resources[0].cloudResource.resource.locatedAt.name",
-                        contains(locationName
+                .andExpect(jsonPath("$.resources", hasSize(2)))
+                .andExpect(jsonPath("$.resources[0].locatedAt.longitude",
+                        equalTo(2.0)))//lessThan//greaterThan
+                .andExpect(jsonPath("$.resources[1].locatedAt.longitude",
+                        equalTo(1.0)))
+                .andExpect(jsonPath("$.resources[*].locatedAt.name",
+                        containsInAnyOrder(locations//locationName
                         )));
     }
 

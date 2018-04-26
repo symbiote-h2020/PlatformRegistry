@@ -9,6 +9,7 @@ import eu.h2020.symbiote.pr.services.SearchService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.querydsl.binding.QuerydslPredicate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -57,8 +58,9 @@ public class SearchController {
                                                    @RequestParam(value="federationId", required = false) List<String> resourceFederations,
                                                    @RequestParam(value="observes_property", required = false) List<String> observes_property,
                                                    @RequestParam(value="resource_type", required = false) String resourceType,
-                                                   @RequestParam(value="location_name", required = false) String locationName,
+                                                   @RequestParam(value="location_name", required = false) List<String> locationName,//String locationName,
                                                    @RequestParam(value="location_lat", required = false) Double locationLat,
+                                                   @RequestParam(value="sort", required = false) String sort,
                                                    @RequestParam(value="location_long", required = false) Double locationLong
     ) {
 
@@ -86,28 +88,12 @@ public class SearchController {
         if(resourceFederations!=null)//if federations of the resource contain any federation in the list
                 builder.and(federatedResource.federations.any().in(resourceFederations));
 
-        //TODO: use instanceOf instead of description
+        //TODO: use instanceOf instead of the added resourceType field
         if(resourceType!=null) {//if resourceType specified
-            switch (resourceType) {
-                case "stationarySensor":
-                    builder.and(federatedResource.cloudResource.resource.as(QStationarySensor.class).description.any().eq("stationarySensor"));////instanceOf(StationarySensor.class));
-                    break;
-                case "actuator":
-                    builder.and(federatedResource.cloudResource.resource.as(QActuator.class).description.any().eq("actuator"));////instanceOf(StationarySensor.class));
-                    break;
-                case "service":
-                    builder.and(federatedResource.cloudResource.resource.as(QService.class).description.any().eq("service"));////instanceOf(StationarySensor.class));
-                    break;
-                case "device":
-                    builder.and(federatedResource.cloudResource.resource.as(QDevice.class).description.any().eq("device"));////instanceOf(StationarySensor.class));
-                    break;
-                case "mobileSensor":
-                    builder.and(federatedResource.cloudResource.resource.as(QMobileSensor.class).description.any().eq("mobileSensor"));////instanceOf(StationarySensor.class));
-                    break;
-            }
+            builder.and(federatedResource.resourceType.eq(resourceType));
         }
 
-        //TODO: fix bug to query by location (name, long, lat etc)
+        //TODO: fix querydsl deep path initialization problem to remove the added fields locationLong etc
         if(locationName!=null) {
             //builder.and(federatedResource.cloudResource.resource.as(QDevice.class).location.as(QWGS84Location.class).name.eq(locationName));//or in
 //            try {
@@ -119,18 +105,26 @@ public class SearchController {
 //            } catch (NoSuchFieldException | IllegalAccessException e) {
 //                log.info("Cast exception", e);
 //            }
-           builder.and(federatedResource.cloudResource.resource.as(QDevice.class).locatedAt.name.eq(locationName));
+            //builder.and(federatedResource.cloudResource.resource.as(QDevice.class).locatedAt.name.eq(locationName));
+            builder.and(federatedResource.locatedAt.name.in(locationName));
+            //builder.and(federatedResource.locatedAt.name.eq(locationName));
         }
 
-        if(locationLat!=null) { //if location latitude is specified, check if exists. Applies to QWGS84Location locations only
-            builder.and(federatedResource.cloudResource.resource.as(QDevice.class).locatedAt.as(QWGS84Location.class).latitude.eq(locationLat));
+        //Point location = new Point(-73.99171, 40.738868);
+        if (locationLat != null) { //if location latitude is specified, check if exists. Applies to QWGS84Location locations only
+            //builder.and(federatedResource.cloudResource.resource.as(QDevice.class).locatedAt.as(QWGS84Location.class).latitude.eq(locationLat));
+            builder.and(federatedResource.locatedAt.as(QWGS84Location.class).latitude.eq(locationLat));
         }
 
-        if(locationLong!=null) { //if location latitude is specified, check if exists. Applies to QWGS84Location locations only
-            builder.and(federatedResource.cloudResource.resource.as(QDevice.class).locatedAt.as(QWGS84Location.class).longitude.eq(locationLong));
+        if (locationLong != null) { //if location latitude is specified, check if exists. Applies to QWGS84Location locations only
+            //builder.and(federatedResource.cloudResource.resource.as(QDevice.class).locatedAt.as(QWGS84Location.class).longitude.eq(locationLong));
+            builder.and(federatedResource.locatedAt.as(QWGS84Location.class).longitude.eq(locationLong));
         }
 
-        return searchService.listPredicate(httpHeaders, builder);
+        Sort sortOrder = null;
+        if(sort!=null)
+            sortOrder= new Sort(new Sort.Order((sort.split(" ", 2)[1].contains("asc")) ? Sort.Direction.ASC : Sort.Direction.DESC, sort.split(" ", 2)[0]));
+        return searchService.listPredicate(httpHeaders, builder, sortOrder);
     }
 
 }

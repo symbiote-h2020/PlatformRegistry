@@ -251,9 +251,10 @@ public abstract class PlatformRegistryBaseTestClass {
         Actuator actuator = new Actuator();
         actuator.setName("actuator");
         actuator.setInterworkingServiceURL("https://actuator.com");
-        //Location sl2 = new SymbolicLocation();
-        //sl2.setName("location2");
-        //sl2.setDescription(Arrays.asList("locationDescription2"));
+        Location sl2 = new SymbolicLocation();
+        sl2.setName("location2");
+        sl2.setDescription(Arrays.asList("locationDescription2"));
+        //actuator.setLocatedAt(sl2);
         actuator.setLocatedAt(new WGS84Location(2.0, 2.0, 2.0, "location2", Arrays.asList("locationDescription2")));
         resources.add(actuator);
 

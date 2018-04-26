@@ -8,6 +8,7 @@ import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,15 +36,19 @@ public class SearchService {
     }
 
 
-    public ResponseEntity listPredicate(HttpHeaders httpHeaders, Predicate p) {
+    public ResponseEntity listPredicate(HttpHeaders httpHeaders, Predicate p, Sort sort) {
         log.trace("listFederationResources request");
 
         ResponseEntity securityChecks = AuthorizationServiceHelper.checkSecurityRequestAndCreateServiceResponse(
                 authorizationService, httpHeaders);
         if (securityChecks.getStatusCode() != HttpStatus.OK)
             return securityChecks;
-
-        List<FederatedResource> resources = resourceRepository.findAll(p);//, new Sort(new Sort.Order(Sort.Direction.ASC, "federations.size()")));
+       //locations.sort((loc1, loc2) -> haversineCalculation(loc1.latitude, loc1.longitude, latitude, longitude).compareTo(haversineCalculation(loc1.latitude, loc1.longitude, latitude, longitude)));
+        List<FederatedResource> resources;
+        if(sort==null)
+            resources=resourceRepository.findAll(p);
+        else
+            resources=resourceRepository.findAll(p, sort);
 
         FederationSearchResult response = new FederationSearchResult(resources);
         return AuthorizationServiceHelper.addSecurityService(response, new HttpHeaders(),
