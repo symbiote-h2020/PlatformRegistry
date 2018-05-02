@@ -90,22 +90,20 @@ public class SearchController {
         if(resourceFederations!=null)//if federations of the resource contain any federation in the list
                 builder.and(federatedResource.federations.any().in(resourceFederations));
 
-        //TODO: use instanceOf instead of the added resourceType field
+        //TODO: fix querydsl problem with to use instanceOf instead of the added resourceType field
         if(resourceType!=null) {//if resourceType specified
             builder.and(federatedResource.resourceType.eq(resourceType));
         }
 
-        //TODO: fix querydsl deep path initialization problem to remove the added location specific fields  if possible
+        //TODO: fix querydsl deep path initialization problem to remove the added location specific fields if possible
         if(locationName!=null)
             builder.and(federatedResource.locatedAt.name.in(locationName));
 
-        if (locationLat!= null && maxDistance==null) { //if location latitude is specified, check if exists. Applies to QWGS84Location locations only
-            builder.and(federatedResource.locatedAt.as(QWGS84Location.class).latitude.eq(locationLat));
-        }
+        if (locationLat!= null && maxDistance==null) //if location latitude is specified, check if exists. Applies to QWGS84Location locations
+            builder.and(federatedResource.locationCoords.get(1).eq(locationLat));
 
-        if (locationLong!= null && maxDistance==null) { //if location latitude is specified, check if exists. Applies to QWGS84Location locations only
-            builder.and(federatedResource.locatedAt.as(QWGS84Location.class).longitude.eq(locationLong));
-        }
+        if (locationLong!= null && maxDistance==null) //if location latitude is specified, check if exists. Applies to QWGS84Location locations
+            builder.and(federatedResource.locationCoords.get(0).eq(locationLong));
 
         Sort sortOrder = null;
         if(sort!=null)

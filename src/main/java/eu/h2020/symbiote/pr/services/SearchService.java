@@ -39,8 +39,8 @@ public class SearchService {
         this.authorizationService = authorizationService;
     }
 
-    public ResponseEntity listByPredicate(HttpHeaders httpHeaders, Predicate p, Sort sort, Circle near) { //double longitude, double latitude, double radius) {
-        log.trace("listFederationResources request");
+    public ResponseEntity listByPredicate(HttpHeaders httpHeaders, Predicate p, Sort sort, Circle near) {
+        log.trace("listByPredicate request");
 
         ResponseEntity securityChecks = AuthorizationServiceHelper.checkSecurityRequestAndCreateServiceResponse(
                 authorizationService, httpHeaders);
