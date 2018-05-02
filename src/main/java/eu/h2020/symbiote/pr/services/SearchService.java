@@ -54,57 +54,16 @@ public class SearchService {
 
         if(near!=null) {
             List<String> symbioteIds = new ArrayList<>(resourceRepository.findAllByLocationCoordsIsWithin(near).stream()
-                    .map(FederatedResource::getSymbioteId).collect(Collectors.toSet())
-            );
+                    .map(FederatedResource::getSymbioteId).collect(Collectors.toSet()));
             builder.and(QFederatedResource.federatedResource.symbioteId.in(symbioteIds));
         }
 
-       // List<FederatedResource> resources;
-       // if(sort==null)
-       //     resources=resourceRepository.findAll(builder);
-        //else
         List<FederatedResource> resources=resourceRepository.findAll(builder, sort);
-
         FederationSearchResult response = new FederationSearchResult(resources);
+
         return AuthorizationServiceHelper.addSecurityService(response, new HttpHeaders(),
                 HttpStatus.OK, (String) securityChecks.getBody());
     }
-
-
-//    public ResponseEntity listByDistance(HttpHeaders httpHeaders, double longitude, double latitude, double radius) {
-//        log.trace("listFederationResources request");
-//
-//        ResponseEntity securityChecks = AuthorizationServiceHelper.checkSecurityRequestAndCreateServiceResponse(
-//                authorizationService, httpHeaders);
-//        if (securityChecks.getStatusCode() != HttpStatus.OK)
-//            return securityChecks;
-//
-//        List<FederatedResource> resources=resourceRepository.findAllByLocationCoordsIsWithin(new Circle(longitude, latitude, radius));
-//
-//        FederationSearchResult response = new FederationSearchResult(resources);
-//        return AuthorizationServiceHelper.addSecurityService(response, new HttpHeaders(),
-//                HttpStatus.OK, (String) securityChecks.getBody());
-//    }
-
-
-//    public ResponseEntity listByPredicate(HttpHeaders httpHeaders, Predicate p, Sort sort) {
-//        log.trace("listFederationResources request");
-//
-//        ResponseEntity securityChecks = AuthorizationServiceHelper.checkSecurityRequestAndCreateServiceResponse(
-//                authorizationService, httpHeaders);
-//        if (securityChecks.getStatusCode() != HttpStatus.OK)
-//            return securityChecks;
-//
-//        List<FederatedResource> resources;
-//        if(sort==null)
-//            resources=resourceRepository.findAll(p);
-//        else
-//            resources=resourceRepository.findAll(p, sort);
-//
-//        FederationSearchResult response = new FederationSearchResult(resources);
-//        return AuthorizationServiceHelper.addSecurityService(response, new HttpHeaders(),
-//                HttpStatus.OK, (String) securityChecks.getBody());
-//    }
 
     public ResponseEntity listResources(HttpHeaders httpHeaders) {
         log.trace("listResources request");

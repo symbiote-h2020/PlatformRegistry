@@ -27,8 +27,6 @@ public interface ResourceRepository extends MongoRepository<FederatedResource, S
 
     List<FederatedResource> deleteAllBySymbioteIdIn(Set<String> ids);
 
-    List<FederatedResource> findAll(Predicate predicate);
-
     List<FederatedResource> findAll(Predicate predicate, Sort sort);
 
     List<FederatedResource> findAllByLocationCoordsIsWithin(Circle point);

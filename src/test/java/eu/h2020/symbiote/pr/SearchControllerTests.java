@@ -281,7 +281,7 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
     }
 
     @Test
-    public void listResourcesInPredicateByLocationSuccessfulTest() throws Exception {
+    public void listResourcesInPredicateByLocationNameSuccessfulTest() throws Exception {
         List<FederatedResource> federatedResourceList = createTestFederatedResources(platformId);
         resourceRepository.save(federatedResourceList);
 
@@ -293,38 +293,90 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         doReturn(new ResponseEntity<>(HttpStatus.OK))
                 .when(authorizationService).checkListResourcesRequest(any(), any());
 
-//        String locationName=federatedResourceList.get(0).getLocatedAt().getName();
-//        WGS84Location l =(WGS84Location) federatedResourceList.get(0).getLocatedAt();
-//        Double locationLong =l.getLongitude();
-//        Double locationLat =l.getLatitude();
-        Double locationLong=0.0;
-        Double locationLat = 0.0;
-        Double radius = 3.0;
-//        String predicate="?location_long="+locationLong
-//                +"&location_lat="+locationLat
-//                +"&max_distance="+radius;
-
         String locations[] = {federatedResourceList.get(0).getLocatedAt().getName(),
-                                federatedResourceList.get(1).getLocatedAt().getName()};
+                federatedResourceList.get(1).getLocatedAt().getName()};
         String locationName = String.join(",", locations);
         String predicate="?location_name="+locationName+"&sort=locatedAt.longitude desc;";
-
-        //String predicate="?location_lat="+locationLat;
-        //String predicate="?location_long="+locationLong;
 
         mockMvc.perform(get("/pr/list_resources_in_predicate/" + predicate))
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(2)))
-//                .andExpect(jsonPath("$.resources[0].locatedAt.longitude",
-//                        equalTo(2.0)))//lessThan//greaterThan
-//                .andExpect(jsonPath("$.resources[1].locatedAt.longitude",
-//                        equalTo(1.0)))
+                .andExpect(jsonPath("$.resources[0].locatedAt.longitude",
+                        equalTo(2.0)))//lessThan//greaterThan
+                .andExpect(jsonPath("$.resources[1].locatedAt.longitude",
+                        equalTo(1.0)))
                 .andExpect(jsonPath("$.resources[*].locatedAt.name",
                         containsInAnyOrder(locations//locationName
                         )));
     }
 
+
+    @Test
+    public void listResourcesInPredicateByLocationCoordsSuccessfulTest() throws Exception {
+        List<FederatedResource> federatedResourceList = createTestFederatedResources(platformId);
+        resourceRepository.save(federatedResourceList);
+
+        // Sleep to make sure that the repo has been updated before querying
+        TimeUnit.MILLISECONDS.sleep(500);
+
+        doReturn(new ResponseEntity<>(serviceResponse, HttpStatus.OK))
+                .when(authorizationService).generateServiceResponse();
+        doReturn(new ResponseEntity<>(HttpStatus.OK))
+                .when(authorizationService).checkListResourcesRequest(any(), any());
+
+        String locationName=federatedResourceList.get(0).getLocatedAt().getName();
+        WGS84Location l =(WGS84Location) federatedResourceList.get(0).getLocatedAt();
+        Double locationLong =l.getLongitude();
+        Double locationLat =l.getLatitude();
+        String predicate="?location_lat="+locationLat
+                +"&location_long="+locationLong;
+
+        mockMvc.perform(get("/pr/list_resources_in_predicate/" + predicate))
+                .andExpect(status().isOk())
+                .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
+                .andExpect(jsonPath("$.resources", hasSize(1)))
+                .andExpect(jsonPath("$.resources[*].locatedAt.name",
+                        containsInAnyOrder(locationName
+                        )));
+    }
+
+    @Test
+    public void listResourcesInPredicateByGeoLocationSuccessfulTest() throws Exception {
+        List<FederatedResource> federatedResourceList = createTestFederatedResources(platformId);
+        resourceRepository.save(federatedResourceList);
+
+        // Sleep to make sure that the repo has been updated before querying
+        TimeUnit.MILLISECONDS.sleep(500);
+
+        doReturn(new ResponseEntity<>(serviceResponse, HttpStatus.OK))
+                .when(authorizationService).generateServiceResponse();
+        doReturn(new ResponseEntity<>(HttpStatus.OK))
+                .when(authorizationService).checkListResourcesRequest(any(), any());
+
+        String locations[] = {federatedResourceList.get(0).getLocatedAt().getName(),
+                federatedResourceList.get(1).getLocatedAt().getName()};
+        String locationName = String.join(",", locations);
+
+        Double locationLong=0.0;
+        Double locationLat = 0.0;
+        Double radius = 3.0;
+        String predicate="?location_long="+locationLong
+                +"&location_lat="+locationLat
+                +"&max_distance="+radius
+                +"&location_name="+locationName
+                +"&sort=locatedAt.longitude desc";
+
+        mockMvc.perform(get("/pr/list_resources_in_predicate/" + predicate))
+                .andExpect(status().isOk())
+                .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
+                .andExpect(jsonPath("$.resources", hasSize(2)))
+                .andExpect(jsonPath("$.resources[0].locatedAt.longitude",
+                        equalTo(2.0)))
+                .andExpect(jsonPath("$.resources[*].locatedAt.name",
+                        containsInAnyOrder(locations
+                        )));
+    }
 
 }
 

@@ -95,21 +95,15 @@ public class SearchController {
             builder.and(federatedResource.resourceType.eq(resourceType));
         }
 
-        //TODO: fix querydsl deep path initialization problem to remove the added fields locationLong etc
-        if(locationName!=null) {
-               builder.and(federatedResource.locatedAt.name.in(locationName));
-            //builder.and(federatedResource.locationCoords.
+        //TODO: fix querydsl deep path initialization problem to remove the added location specific fields  if possible
+        if(locationName!=null)
+            builder.and(federatedResource.locatedAt.name.in(locationName));
 
-        }
-
-        //Point location = new Point(-73.99171, 40.738868);
         if (locationLat!= null && maxDistance==null) { //if location latitude is specified, check if exists. Applies to QWGS84Location locations only
-            //builder.and(federatedResource.cloudResource.resource.as(QDevice.class).locatedAt.as(QWGS84Location.class).latitude.eq(locationLat));
             builder.and(federatedResource.locatedAt.as(QWGS84Location.class).latitude.eq(locationLat));
         }
 
         if (locationLong!= null && maxDistance==null) { //if location latitude is specified, check if exists. Applies to QWGS84Location locations only
-            //builder.and(federatedResource.cloudResource.resource.as(QDevice.class).locatedAt.as(QWGS84Location.class).longitude.eq(locationLong));
             builder.and(federatedResource.locatedAt.as(QWGS84Location.class).longitude.eq(locationLong));
         }
 
@@ -117,6 +111,7 @@ public class SearchController {
         if(sort!=null)
             sortOrder= new Sort(new Sort.Order((sort.split(" ", 2)[1].contains("asc")) ? Sort.Direction.ASC : Sort.Direction.DESC, sort.split(" ", 2)[0]));
 
+        //TODO: fix to build geospatial query predicates directly using querydsl if possible
         Circle locationNear = null;
         if(locationLat != null && locationLong != null && maxDistance !=null)
             locationNear = new Circle(locationLong, locationLat, maxDistance);
