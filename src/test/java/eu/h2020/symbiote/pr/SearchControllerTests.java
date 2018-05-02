@@ -293,10 +293,16 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         doReturn(new ResponseEntity<>(HttpStatus.OK))
                 .when(authorizationService).checkListResourcesRequest(any(), any());
 
-  //      String locationName=federatedResourceList.get(0).getLocatedAt().getName();
-//        WGS84Location l =(WGS84Location) s.getLocatedAt();
+//        String locationName=federatedResourceList.get(0).getLocatedAt().getName();
+//        WGS84Location l =(WGS84Location) federatedResourceList.get(0).getLocatedAt();
 //        Double locationLong =l.getLongitude();
 //        Double locationLat =l.getLatitude();
+        Double locationLong=0.0;
+        Double locationLat = 0.0;
+        Double radius = 3.0;
+//        String predicate="?location_long="+locationLong
+//                +"&location_lat="+locationLat
+//                +"&max_distance="+radius;
 
         String locations[] = {federatedResourceList.get(0).getLocatedAt().getName(),
                                 federatedResourceList.get(1).getLocatedAt().getName()};
@@ -310,10 +316,10 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(2)))
-                .andExpect(jsonPath("$.resources[0].locatedAt.longitude",
-                        equalTo(2.0)))//lessThan//greaterThan
-                .andExpect(jsonPath("$.resources[1].locatedAt.longitude",
-                        equalTo(1.0)))
+//                .andExpect(jsonPath("$.resources[0].locatedAt.longitude",
+//                        equalTo(2.0)))//lessThan//greaterThan
+//                .andExpect(jsonPath("$.resources[1].locatedAt.longitude",
+//                        equalTo(1.0)))
                 .andExpect(jsonPath("$.resources[*].locatedAt.name",
                         containsInAnyOrder(locations//locationName
                         )));

@@ -3,6 +3,7 @@ package eu.h2020.symbiote.pr.repositories;
 import com.querydsl.core.types.Predicate;
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.geo.*;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.querydsl.QueryDslPredicateExecutor;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
@@ -26,9 +27,11 @@ public interface ResourceRepository extends MongoRepository<FederatedResource, S
 
     List<FederatedResource> deleteAllBySymbioteIdIn(Set<String> ids);
 
-   List<FederatedResource> findAll(Predicate predicate);
+    List<FederatedResource> findAll(Predicate predicate);
 
     List<FederatedResource> findAll(Predicate predicate, Sort sort);
+
+    List<FederatedResource> findAllByLocationCoordsIsWithin(Circle point);
 
     List<FederatedResource> deleteAllByCloudResource_InternalIdIn(Set<String> internalIds);
 }
