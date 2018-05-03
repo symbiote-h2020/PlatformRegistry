@@ -47,18 +47,18 @@ public class SearchService {
         if (securityChecks.getStatusCode() != HttpStatus.OK)
             return securityChecks;
 
-        BooleanBuilder builder=new BooleanBuilder();
+        BooleanBuilder predicate=new BooleanBuilder();//build final predicate as geospatial queries are not supported by querydsl to be directly included in predicate.
 
-        if(p!=null)
-            builder.and(p);
+        if(p!=null)//include predicate specified for the non geospatial query part
+            predicate.and(p);
 
-        if(near!=null) {
+        if(near!=null) {//build and include predicate for the specified geospatial query part
             List<String> symbioteIds = new ArrayList<>(resourceRepository.findAllByLocationCoordsIsWithin(near).stream()
-                    .map(FederatedResource::getSymbioteId).collect(Collectors.toSet()));
-            builder.and(QFederatedResource.federatedResource.symbioteId.in(symbioteIds));
+                    .map(FederatedResource::getSymbioteId).collect(Collectors.toSet()));//find symbioteIds (as they are unique id specifiers) of federatedResources within the circle specified
+            predicate.and(QFederatedResource.federatedResource.symbioteId.in(symbioteIds));//find federatedResources with the specified symbioteIds
         }
 
-        List<FederatedResource> resources=resourceRepository.findAll(builder, sort);
+        List<FederatedResource> resources=resourceRepository.findAll(predicate, sort);//federatedResources for the combined predicate. Results sorted if required
         FederationSearchResult response = new FederationSearchResult(resources);
 
         return AuthorizationServiceHelper.addSecurityService(response, new HttpHeaders(),

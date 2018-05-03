@@ -61,9 +61,9 @@ public class SearchController {
                                                    @RequestParam(value="resource_type", required = false) String resourceType,
                                                    @RequestParam(value="location_name", required = false) List<String> locationName,//String locationName,
                                                    @RequestParam(value="location_lat", required = false) Double locationLat,
-                                                   @RequestParam(value="sort", required = false) String sort,
                                                    @RequestParam(value="location_long", required = false) Double locationLong,
-                                                   @RequestParam(value = "max_distance", required = false) Double maxDistance
+                                                   @RequestParam(value = "max_distance", required = false) Double maxDistance,
+                                                   @RequestParam(value="sort", required = false) String sort
     ) {
 
         log.trace("Request to /list_resources_in_predicate");
@@ -71,48 +71,48 @@ public class SearchController {
         BooleanBuilder builder=new BooleanBuilder();
         QFederatedResource federatedResource = QFederatedResource.federatedResource;
 
-        if(resourceNames!=null) //if resourceName is specified, check if resource name is in the list
+        if(resourceNames!=null) //find federatedResources where resourceName is in the list
             builder.and(federatedResource.cloudResource.resource.name.in(resourceNames));
 
-        if(resourceDescriptions!=null) //check if all strings in Description exist in federatedResource
+        if(resourceDescriptions!=null) //find federatedResources where description (list of strings) contains all strings specified. "and" is required instead of "andAnyOf"
             for(String rD: resourceDescriptions)
                 builder.and(federatedResource.cloudResource.resource.description.any().eq(rD));
 
-        if(observes_property!=null) //Description is a List so if all of the strings in the list. used and instead of andAnyOf
+        if(observes_property!=null) //find federatedResources where Observes_property (list of strings) contains all strings specified.
             for(String oP: observes_property) {
                 QSensor qsensor = federatedResource.cloudResource.resource.as(QSensor.class);
                 builder.and(federatedResource.cloudResource.resource.as(QSensor.class).observesProperty.any().eq(oP));
             }
 
-        if(symbioteIds!=null) //if symbioteid of the resource is in the list
+        if(symbioteIds!=null) //find federatedResources with symbioteid in the specified list
             builder.and(federatedResource.symbioteId.in(symbioteIds));
 
-        if(resourceFederations!=null)//if federations of the resource contain any federation in the list
+        if(resourceFederations!=null)//if federatedResource belongs to any of the federations specified
                 builder.and(federatedResource.federations.any().in(resourceFederations));
 
-        //TODO: fix querydsl problem with to use instanceOf instead of the added resourceType field
-        if(resourceType!=null) {//if resourceType specified
+        //TODO: fix querydsl problem with instanceOf use to remove the added resourceType field
+        if(resourceType!=null) {//find federatedResources where resource is instanceof resourceType.  federatedResource's resourceType contains the simple name of resource's class.
             builder.and(federatedResource.resourceType.eq(resourceType));
         }
 
         //TODO: fix querydsl deep path initialization problem to remove the added location specific fields if possible
-        if(locationName!=null)
+        if(locationName!=null)//find federatedResources locatedAt specified location
             builder.and(federatedResource.locatedAt.name.in(locationName));
 
-        if (locationLat!= null && maxDistance==null) //if location latitude is specified, check if exists. Applies to QWGS84Location locations
-            builder.and(federatedResource.locationCoords.get(1).eq(locationLat));
-
-        if (locationLong!= null && maxDistance==null) //if location latitude is specified, check if exists. Applies to QWGS84Location locations
+        if (locationLong!= null && maxDistance==null) //find federatedResources with the specified longitude. Resource of type Device with location of type QWGS84Location, null otherwise.
             builder.and(federatedResource.locationCoords.get(0).eq(locationLong));
 
-        Sort sortOrder = null;
-        if(sort!=null)
-            sortOrder= new Sort(new Sort.Order((sort.split(" ", 2)[1].contains("asc")) ? Sort.Direction.ASC : Sort.Direction.DESC, sort.split(" ", 2)[0]));
+        if (locationLat!= null && maxDistance==null) //find federatedResources with the specified latitude. Resource of type Device with location of type QWGS84Location, null otherwise.
+            builder.and(federatedResource.locationCoords.get(1).eq(locationLat));
 
         //TODO: fix to build geospatial query predicates directly using querydsl if possible
-        Circle locationNear = null;
+        Circle locationNear = null;//find federatedResources that are near (within radius) of the specified location coordinates
         if(locationLat != null && locationLong != null && maxDistance !=null)
             locationNear = new Circle(locationLong, locationLat, maxDistance);
+
+        Sort sortOrder = null; //if federatedResources need to be sorted, order by the specified field in direction specified
+        if(sort!=null)
+            sortOrder= new Sort(new Sort.Order((sort.split(" ", 2)[1].contains("asc")) ? Sort.Direction.ASC : Sort.Direction.DESC, sort.split(" ", 2)[0]));
 
         return searchService.listByPredicate(httpHeaders, builder, sortOrder, locationNear);
 
