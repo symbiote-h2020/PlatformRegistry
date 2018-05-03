@@ -237,7 +237,7 @@ public abstract class PlatformRegistryBaseTestClass {
         StationarySensor stationarySensor = new StationarySensor();
         stationarySensor.setLocatedAt(new WGS84Location(1.0, 1.0, 1.0, "location1", Arrays.asList("locationDescription1")));
         stationarySensor.setName("stationarySensor");
-        stationarySensor.setDescription(Collections.singletonList("stationarySensor"));
+        stationarySensor.setDescription(Collections.singletonList("sensor1Description"));
         stationarySensor.setInterworkingServiceURL("https://stationarySensor.com");
         stationarySensor.setObservesProperty(Arrays.asList("property1", "property2"));
         resources.add(stationarySensor);
