@@ -378,5 +378,39 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
                         )));
     }
 
+
+
+
+
+    @Test
+    public void listResourcesAllSuccessfulTest() throws Exception {
+        List<FederatedResource> federatedResourceList = createTestFederatedResources(platformId);
+        resourceRepository.save(federatedResourceList);
+
+        // Sleep to make sure that the repo has been updated before querying
+        TimeUnit.MILLISECONDS.sleep(500);
+
+        doReturn(new ResponseEntity<>(serviceResponse, HttpStatus.OK))
+                .when(authorizationService).generateServiceResponse();
+        doReturn(new ResponseEntity<>(HttpStatus.OK))
+                .when(authorizationService).checkListResourcesRequest(any(), any());
+
+        String predicate="?sort=symbioteId desc";//"";//
+
+        mockMvc.perform(get("/pr/list_resources_in_predicate/" + predicate))
+                .andExpect(status().isOk())
+                .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
+                .andExpect(jsonPath("$.resources", hasSize(3)))
+                .andExpect(jsonPath("$.resources[0].symbioteId",
+                        greaterThan("$.resources[1].symbioteId")))
+                .andExpect(jsonPath("$.resources[1].symbioteId",
+                        greaterThan("$.resources[2].symbioteId"
+                        )));
+
+    }
+
+
+
+
 }
 

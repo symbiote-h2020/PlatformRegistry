@@ -8,7 +8,6 @@ import eu.h2020.symbiote.cloud.model.internal.FederationInfoBean;
 import eu.h2020.symbiote.cloud.model.internal.ResourceSharingInformation;
 import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.pr.dummyListeners.DummySubscriptionManagerListener;
-import eu.h2020.symbiote.pr.model.PersistentVariable;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import eu.h2020.symbiote.pr.services.AuthorizationService;
 import org.apache.commons.logging.Log;
@@ -29,7 +28,6 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Vasileios Glykantzis (ICOM)

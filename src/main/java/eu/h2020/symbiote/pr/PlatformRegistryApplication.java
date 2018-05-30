@@ -1,7 +1,5 @@
 package eu.h2020.symbiote.pr;
 
-import eu.h2020.symbiote.pr.constants.Constants;
-import eu.h2020.symbiote.pr.model.PersistentVariable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
