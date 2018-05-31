@@ -85,6 +85,10 @@ public class RegistrationHandlerService {
                 if (cloudResource.getFederationInfo() != null && cloudResource.getFederationInfo().getSharingInformation() != null)
                     federationInfo.setSharingInformation(cloudResource.getFederationInfo().getSharingInformation());
 
+                //to not overwrite the resource Trust value while updating the federation info with symbioteId
+                if (cloudResource.getFederationInfo() != null && cloudResource.getFederationInfo().getResourceTrust() != null)
+                    federationInfo.setResourceTrust(cloudResource.getFederationInfo().getResourceTrust());
+
                 cloudResource.setFederationInfo(federationInfo);
             }
 
@@ -97,8 +101,10 @@ public class RegistrationHandlerService {
                     sharingInformation.setSharingDate(new Date());
             }
 
+           // cloudResource.getFederationInfo().setResourceTrust(resourceTrust);
 
-            resourcesToSave.add(new FederatedResource(cloudResource));
+
+            resourcesToSave.add(new FederatedResource(cloudResource));//adaptiveTrust is null
             log.debug("FederatedResource " + cloudResource.getInternalId() + " is exposed to "
                     + cloudResource.getFederationInfo().getSharingInformation().keySet());
         }

@@ -73,6 +73,9 @@ public class SubscriptionManagerService {
                     // We have already added this symbioteId to the resourcesToBeStored, so we will update it there
                     FederatedResource federatedResource = storedFederatedResources.get(symbioteId);
                     federatedResource.shareToNewFederation(federationId, barteringStatus);
+
+                    //we have kept the storedFederatedResources.get(symbioteId).adaptiveTrust from the repository. We do not change the values updated in repository from Trust Manager.
+
                     resourcesToBeStored.put(federatedResource.getSymbioteId(), federatedResource);
 
                 } else {
