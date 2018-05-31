@@ -379,7 +379,30 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
     }
 
 
+    @Test
+    public void listResourcesInPredicateByTrust() throws Exception {
+        List<FederatedResource> federatedResourceList = createTestFederatedResources(platformId);
+        resourceRepository.save(federatedResourceList);
 
+        // Sleep to make sure that the repo has been updated before querying
+        TimeUnit.MILLISECONDS.sleep(500);
+
+        doReturn(new ResponseEntity<>(serviceResponse, HttpStatus.OK))
+                .when(authorizationService).generateServiceResponse();
+        doReturn(new ResponseEntity<>(HttpStatus.OK))
+                .when(authorizationService).checkListResourcesRequest(any(), any());
+
+      //  String locations[] = {federatedResourceList.get(0).getLocatedAt().getName(),
+        //        federatedResourceList.get(1).getLocatedAt().getName()};
+      //  String locationName = String.join(",", locations);
+        String predicate="?resource_trust=1.0&adaptive_trust=6.0";
+
+        mockMvc.perform(get("/pr/list_resources_in_predicate/" + predicate))
+                .andExpect(status().isOk())
+                .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
+                .andExpect(jsonPath("$.resources", hasSize(2
+                        )));
+      }
 
 
     @Test

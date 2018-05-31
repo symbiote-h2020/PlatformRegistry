@@ -63,6 +63,8 @@ public class SearchController {
                                                    @RequestParam(value="location_lat", required = false) Double locationLat,
                                                    @RequestParam(value="location_long", required = false) Double locationLong,
                                                    @RequestParam(value = "max_distance", required = false) Double maxDistance,
+                                                   @RequestParam(value="resource_trust", required = false) Double resourceTrust,
+                                                   @RequestParam(value="adaptive_trust", required = false) Double adaptiveTrust,
                                                    @RequestParam(value="sort", required = false) String sort
     ) {
 
@@ -109,6 +111,15 @@ public class SearchController {
         Circle locationNear = null;//find federatedResources that are near (within radius) of the specified location coordinates
         if(locationLat != null && locationLong != null && maxDistance !=null)
             locationNear = new Circle(locationLong, locationLat, maxDistance);
+
+
+        if (resourceTrust!= null) { //find federatedResources with resourceTrust greater or equal than the specified value.
+                builder.and(federatedResource.cloudResource.federationInfo.resourceTrust.goe(resourceTrust));
+        }
+
+        if (adaptiveTrust!= null) //find federatedResources with adaptiveTrust greater or equal than the specified value.
+            builder.and(federatedResource.adaptiveTrust.goe(adaptiveTrust));
+
 
         Sort sortOrder = null; //if federatedResources need to be sorted, order by the specified field in direction specified
         if(sort!=null)

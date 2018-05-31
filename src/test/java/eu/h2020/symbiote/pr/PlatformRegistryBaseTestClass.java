@@ -151,7 +151,7 @@ public abstract class PlatformRegistryBaseTestClass {
         CloudResource cloudResource1 = new CloudResource();
         cloudResource1.setResource(resources.get(0));
         cloudResource1.setInternalId("stationarySensorInternalId");
-
+        federationInfoBean1.setResourceTrust(1.0);
         cloudResource1.setFederationInfo(federationInfoBean1);
 
         // Create 2nd cloudResource
@@ -163,10 +163,10 @@ public abstract class PlatformRegistryBaseTestClass {
 
         FederationInfoBean federationInfoBean2 = new FederationInfoBean();
         federationInfoBean2.setSharingInformation(resourceSharingInformationMap2);
-
         CloudResource cloudResource2 = new CloudResource();
         cloudResource2.setResource(resources.get(1));
         cloudResource2.setInternalId("actuatorInternalId");
+        federationInfoBean2.setResourceTrust(2.0);
         cloudResource2.setFederationInfo(federationInfoBean2);
 
         // Create 3rd cloudResource
@@ -182,6 +182,7 @@ public abstract class PlatformRegistryBaseTestClass {
         CloudResource cloudResource3 = new CloudResource();
         cloudResource3.setResource(resources.get(2));
         cloudResource3.setInternalId("serviceInternalId");
+        federationInfoBean3.setResourceTrust(3.0);
         cloudResource3.setFederationInfo(federationInfoBean3);
 
         // Create a registration request for a federatedCloudResource
@@ -205,7 +206,7 @@ public abstract class PlatformRegistryBaseTestClass {
         newIds.clear();
         newIds.add(id);
         assertTrue(resourceRepository.findAllBySymbioteIdIn(newIds).size()==0);
-        FederatedResource federatedResource1 = new FederatedResource(id, cloudResources.get(0));
+        FederatedResource federatedResource1 = new FederatedResource(id, cloudResources.get(0), 10.0);
         assertTrue(!existingIds.contains(id));
         existingIds.add(id);
 
@@ -213,7 +214,7 @@ public abstract class PlatformRegistryBaseTestClass {
         newIds.clear();
         newIds.add(id);
         assertTrue(resourceRepository.findAllBySymbioteIdIn(newIds).size()==0);
-        FederatedResource federatedResource2 = new FederatedResource(id, cloudResources.get(1));
+        FederatedResource federatedResource2 = new FederatedResource(id, cloudResources.get(1), 7.00);
         assertTrue(!existingIds.contains(id));
         existingIds.add(id);
 
@@ -221,7 +222,7 @@ public abstract class PlatformRegistryBaseTestClass {
         newIds.clear();
         newIds.add(id);
         assertTrue(resourceRepository.findAllBySymbioteIdIn(newIds).size()==0);
-        FederatedResource federatedResource3 = new FederatedResource(id, cloudResources.get(2));
+        FederatedResource federatedResource3 = new FederatedResource(id, cloudResources.get(2), 5.00);
         assertTrue(!existingIds.contains(id));
         existingIds.add(id);
 
