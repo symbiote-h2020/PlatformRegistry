@@ -101,8 +101,8 @@ public class RegistrationHandlerService {
                     sharingInformation.setSharingDate(new Date());
             }
 
+            //resourceTrust is not required to be updated here
            // cloudResource.getFederationInfo().setResourceTrust(resourceTrust);
-
 
             resourcesToSave.add(new FederatedResource(cloudResource));//adaptiveTrust is null
             log.debug("FederatedResource " + cloudResource.getInternalId() + " is exposed to "

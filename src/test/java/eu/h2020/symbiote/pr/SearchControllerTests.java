@@ -392,9 +392,6 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         doReturn(new ResponseEntity<>(HttpStatus.OK))
                 .when(authorizationService).checkListResourcesRequest(any(), any());
 
-      //  String locations[] = {federatedResourceList.get(0).getLocatedAt().getName(),
-        //        federatedResourceList.get(1).getLocatedAt().getName()};
-      //  String locationName = String.join(",", locations);
         String predicate="?resource_trust=1.0&adaptive_trust=6.0";
 
         mockMvc.perform(get("/pr/list_resources_in_predicate/" + predicate))

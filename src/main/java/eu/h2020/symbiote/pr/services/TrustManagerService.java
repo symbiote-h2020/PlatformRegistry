@@ -66,7 +66,7 @@ public class TrustManagerService {
                     federatedResource.setAdaptiveTrust(newFederatedResource.getAdaptiveTrust());
                     resourcesToBeStored.put(federatedResource.getSymbioteId(), federatedResource);
                 } else {//adding new federatedResources. it shouldnt be the case
-                    resourcesToBeStored.put(symbioteId, newFederatedResource);
+                    continue;//resourcesToBeStored.put(symbioteId, newFederatedResource);
                 }
         }
 

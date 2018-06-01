@@ -64,21 +64,20 @@ public class SubscriptionManagerService {
 
                 if (resourcesToBeStored.containsKey(symbioteId)) {
 
-                    // We have already added this symbioteId to the resourcesToBeStored, so we will update it there
+                    // We have already added this symbioteId to the resourcesToBeStored, so we only update the extra federation
                     FederatedResource federatedResource = resourcesToBeStored.get(symbioteId);
                     federatedResource.shareToNewFederation(federationId, barteringStatus);
 
                 } else if (storedFederatedResources.containsKey(symbioteId)) {
 
-                    // We have already added this symbioteId to the resourcesToBeStored, so we will update it there
+                    // The resource exists in the repository so we read it from there and update it
+                    //we have kept the adaptiveTrust field so we do not change it leave it as it is in the repository (set by Trust Manager).
                     FederatedResource federatedResource = storedFederatedResources.get(symbioteId);
                     federatedResource.shareToNewFederation(federationId, barteringStatus);
 
-                    //we have kept the storedFederatedResources.get(symbioteId).adaptiveTrust from the repository. We do not change the values updated in repository from Trust Manager.
-
                     resourcesToBeStored.put(federatedResource.getSymbioteId(), federatedResource);
 
-                } else {
+                } else {//add it as it doesn't exist
                     resourcesToBeStored.put(symbioteId, newFederatedResource);
                 }
             }
