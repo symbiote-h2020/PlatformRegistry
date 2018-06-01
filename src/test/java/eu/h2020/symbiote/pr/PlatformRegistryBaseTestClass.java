@@ -2,14 +2,12 @@ package eu.h2020.symbiote.pr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
-import eu.h2020.symbiote.cloud.model.internal.CloudResource;
-import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
-import eu.h2020.symbiote.cloud.model.internal.FederationInfoBean;
-import eu.h2020.symbiote.cloud.model.internal.ResourceSharingInformation;
+import eu.h2020.symbiote.cloud.model.internal.*;
 import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.pr.dummyListeners.DummySubscriptionManagerListener;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import eu.h2020.symbiote.pr.services.AuthorizationService;
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.After;
@@ -28,6 +26,7 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Vasileios Glykantzis (ICOM)
@@ -62,6 +61,9 @@ public abstract class PlatformRegistryBaseTestClass {
     @Value("${rabbit.exchange.platformRegistry.name}")
     protected String platformRegistryExchange;
 
+    @Value("${rabbit.exchange.trust}")
+    protected String trustExchange;
+
     @Value("${rabbit.routingKey.platformRegistry.update}")
     protected String addOrUpdateRequestKey;
 
@@ -79,6 +81,9 @@ public abstract class PlatformRegistryBaseTestClass {
 
     @Value("${rabbit.routingKey.platformRegistry.removeFederatedResources}")
     protected String removeFederatedResourcesKey;
+
+    @Value("${rabbit.routingKey.trust.updateAdaptiveResourceTrust}")
+    protected String updateAdaptiveResourceTrustKey;
 
     protected String serviceResponse = "testServiceResponse";
 
