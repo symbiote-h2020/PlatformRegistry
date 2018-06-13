@@ -88,7 +88,7 @@ dependencies {
     */
 
 
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:trust-SNAPSHOT') { changing = true }//5.14+
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:resource_sharing_lib-SNAPSHOT') { changing = true }//5.14+//trust
 
     // Spring
     compile('org.springframework.cloud:spring-cloud-starter-config')

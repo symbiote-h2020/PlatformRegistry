@@ -73,6 +73,10 @@ public class SearchController {
         BooleanBuilder builder=new BooleanBuilder();
         QFederatedResource federatedResource = QFederatedResource.federatedResource;
 
+        if(p!=null) { //find federatedResources with the specified fields in the predicate
+            builder.and(p);
+        }
+
         if(resourceNames!=null) //find federatedResources where resourceName is in the list
             builder.and(federatedResource.cloudResource.resource.name.in(resourceNames));
 

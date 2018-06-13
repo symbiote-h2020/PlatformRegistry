@@ -82,6 +82,7 @@ public class RegistrationHandlerService {
                 FederationInfoBean federationInfo = new FederationInfoBean();
                 federationInfo.setSymbioteId(createNewResourceId());
 
+                // todo: Set also the symbioteId inside sharingInformation
                 if (cloudResource.getFederationInfo() != null && cloudResource.getFederationInfo().getSharingInformation() != null)
                     federationInfo.setSharingInformation(cloudResource.getFederationInfo().getSharingInformation());
 
