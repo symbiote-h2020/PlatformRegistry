@@ -46,14 +46,14 @@ public class SubscriptionManagerService {
 
         // Get all the federated resources ids in order to fetch them from the database
         Set<String> newFederatedResourcesIds = resourcesAddedOrUpdated.getNewFederatedResources().stream()
-                .map(FederatedResource::getSymbioteId).collect(Collectors.toSet());
+                .map(FederatedResource::getAggregationId).collect(Collectors.toSet());
 
         // Find the stored federated resources and convert them to a map, in which the key is the internalId
-        Map<String, FederatedResource> storedFederatedResources = resourceRepository.findAllBySymbioteIdIn(newFederatedResourcesIds)
-                .stream().collect(Collectors.toMap(FederatedResource::getSymbioteId, federatedResource -> federatedResource));
+        Map<String, FederatedResource> storedFederatedResources = resourceRepository.findAllByAggregationIdIn(newFederatedResourcesIds)
+                .stream().collect(Collectors.toMap(FederatedResource::getAggregationId, federatedResource -> federatedResource));
 
         for (FederatedResource newFederatedResource : resourcesAddedOrUpdated.getNewFederatedResources()) {
-            String symbioteId = newFederatedResource.getSymbioteId();
+            String symbioteId = newFederatedResource.getAggregationId();
             if (symbioteId == null)
                 continue;
 
@@ -75,7 +75,7 @@ public class SubscriptionManagerService {
                     FederatedResource federatedResource = storedFederatedResources.get(symbioteId);
                     federatedResource.shareToNewFederation(federationId, barteringStatus);
 
-                    resourcesToBeStored.put(federatedResource.getSymbioteId(), federatedResource);
+                    resourcesToBeStored.put(federatedResource.getAggregationId(), federatedResource);
 
                 } else {//add it as it doesn't exist
                     resourcesToBeStored.put(symbioteId, newFederatedResource);
@@ -99,41 +99,47 @@ public class SubscriptionManagerService {
         // Platform resources should not be present here. Only, federated resources offered by other platforms should be
         // in the ResourcesDeletedMessage
 
-        Set<String> resourceIds = resourcesDeleted.getDeletedFederatedResourcesMap().keySet();
+        Set<String> resourceIds = new HashSet<>();
+        for (String symbioteId: resourcesDeleted.getDeletedFederatedResources()) {
+            String aggregationId = symbioteId.split("@", 3)[0] +
+                    "@"+symbioteId.split("@", 3)[1];
+            resourceIds.add(aggregationId);
+
+        }
 
         // Ids of the resources which are not shared in any federation any more
         Set<String> unsharedResourcesIds = new HashSet<>();
 
         // Fetch the stored federated resources and
-        List<FederatedResource> storedFederatedResources = resourceRepository.findAllBySymbioteIdIn(resourceIds);
+        List<FederatedResource> storedFederatedResources = resourceRepository.findAllByAggregationIdIn(resourceIds);
 
         // Convert them to a map in which the key is the internalId
         Map<String, FederatedResource> storedFederatedResourcesMap = storedFederatedResources.stream()
-                .collect(Collectors.toMap(FederatedResource::getSymbioteId, federatedResource -> federatedResource));
+                .collect(Collectors.toMap(FederatedResource::getAggregationId, federatedResource -> federatedResource));
 
-        for (Map.Entry<String, Set<String>> entry : resourcesDeleted.getDeletedFederatedResourcesMap().entrySet()) {
+        for (String entry : resourcesDeleted.getDeletedFederatedResources()) {
 
-            String symbioteId = entry.getKey();
+            String aggregationId = entry.split("@", 3)[0] +
+                    "@"+entry.split("@", 3)[1];
+            String federationId = entry.split("@", 3)[2];
 
-            for (String federationId : entry.getValue()) {
-
-                FederatedResource federatedResource = storedFederatedResourcesMap.get(symbioteId);
+                FederatedResource federatedResource = storedFederatedResourcesMap.get(aggregationId);
 
                 if (federatedResource != null) {
                     federatedResource.unshareFromFederation(federationId);
 
                     // If the resource is not shared in any federation any more, we remove it from the repository
                     if (federatedResource.getFederations().size() == 0) {
-                        storedFederatedResourcesMap.remove(symbioteId);
-                        unsharedResourcesIds.add(symbioteId);
+                        storedFederatedResourcesMap.remove(aggregationId);
+                        unsharedResourcesIds.add(aggregationId);
                     }
                 }
-            }
+
         }
 
 
         resourceRepository.save(new ArrayList<>(storedFederatedResourcesMap.values()));
-        resourceRepository.deleteAllBySymbioteIdIn(unsharedResourcesIds);
+        resourceRepository.deleteAllByAggregationIdIn(unsharedResourcesIds);
 
     }
 }

@@ -1,4 +1,5 @@
 @QueryEntities({eu.h2020.symbiote.cloud.model.internal.FederatedResource.class,
+        eu.h2020.symbiote.cloud.model.internal.FederatedResourceInfo.class,
         eu.h2020.symbiote.cloud.model.internal.CloudResource.class,
         eu.h2020.symbiote.model.cim.Sensor.class,
         eu.h2020.symbiote.model.cim.Resource.class,

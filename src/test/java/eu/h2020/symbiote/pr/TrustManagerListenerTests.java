@@ -31,10 +31,12 @@ public class TrustManagerListenerTests extends PlatformRegistryBaseTestClass {
             TimeUnit.MILLISECONDS.sleep(100);
         }
 
-
-        testFederatedResources.get(0).setAdaptiveTrust(17.0);
-        testFederatedResources.get(1).setAdaptiveTrust(15.0);
-        testFederatedResources.get(2).setAdaptiveTrust(19.0);
+        for(String fedId: testFederatedResources.get(0).getFederatedResourceInfoMap().keySet())
+            testFederatedResources.get(0).getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(17.00);
+        for(String fedId: testFederatedResources.get(1).getFederatedResourceInfoMap().keySet())
+            testFederatedResources.get(1).getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(15.00);
+        for(String fedId: testFederatedResources.get(2).getFederatedResourceInfoMap().keySet())
+            testFederatedResources.get(2).getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(19.00);
 
         assertEquals(3, resourceRepository.findAll().size());
 
@@ -47,12 +49,17 @@ public class TrustManagerListenerTests extends PlatformRegistryBaseTestClass {
         List<FederatedResource> stored = resourceRepository.findAll();
         assertEquals(3, stored.size());
 
-        FederatedResource resource1 = resourceRepository.findOne(testFederatedResources.get(0).getSymbioteId());
-        assertTrue(resource1.getAdaptiveTrust().equals(17.0));
-        FederatedResource resource2 = resourceRepository.findOne(testFederatedResources.get(1).getSymbioteId());
-        assertTrue(resource2.getAdaptiveTrust().equals(15.0));
-        FederatedResource resource3 = resourceRepository.findOne(testFederatedResources.get(2).getSymbioteId());
-        assertTrue(resource3.getAdaptiveTrust().equals(19.0));
+        FederatedResource resource1 = resourceRepository.findOne(testFederatedResources.get(0).getAggregationId());
+        for(String fedId: resource1.getFederatedResourceInfoMap().keySet())
+            assertTrue(resource1.getFederatedResourceInfoMap().get(fedId).getAdaptiveTrust().equals(17.0));
+
+        FederatedResource resource2 = resourceRepository.findOne(testFederatedResources.get(1).getAggregationId());
+        for(String fedId: resource2.getFederatedResourceInfoMap().keySet())
+            assertTrue(resource2.getFederatedResourceInfoMap().get(fedId).getAdaptiveTrust().equals(15.0));
+
+        FederatedResource resource3 = resourceRepository.findOne(testFederatedResources.get(2).getAggregationId());
+        for(String fedId: resource3.getFederatedResourceInfoMap().keySet())
+            assertTrue(resource3.getFederatedResourceInfoMap().get(fedId).getAdaptiveTrust().equals(19.0));
 
 
     }

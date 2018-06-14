@@ -55,7 +55,7 @@ public class SearchController {
                                                    @QuerydslPredicate(root = FederatedResource.class) Predicate p,
                                                    @RequestParam(value="name", required = false) List<String> resourceNames,
                                                    @RequestParam(value="description", required = false) List<String> resourceDescriptions,
-                                                   @RequestParam(value="id", required = false) List<String> symbioteIds,
+                                                   @RequestParam(value="id", required = false) List<String> aggregationIds,
                                                    @RequestParam(value="federationId", required = false) List<String> resourceFederations,
                                                    @RequestParam(value="observes_property", required = false) List<String> observes_property,
                                                    @RequestParam(value="resource_type", required = false) String resourceType,
@@ -90,8 +90,8 @@ public class SearchController {
                 builder.and(federatedResource.cloudResource.resource.as(QSensor.class).observesProperty.any().eq(oP));
             }
 
-        if(symbioteIds!=null) //find federatedResources with symbioteid in the specified list
-            builder.and(federatedResource.symbioteId.in(symbioteIds));
+        if(aggregationIds!=null) //find federatedResources with symbioteid in the specified list
+            builder.and(federatedResource.aggregationId.in(aggregationIds));
 
         if(resourceFederations!=null)//if federatedResource belongs to any of the federations specified
                 builder.and(federatedResource.federations.any().in(resourceFederations));
@@ -121,8 +121,8 @@ public class SearchController {
                 builder.and(federatedResource.cloudResource.federationInfo.resourceTrust.goe(resourceTrust));
         }
 
-        if (adaptiveTrust!= null) //find federatedResources with adaptiveTrust greater or equal than the specified value.
-            builder.and(federatedResource.adaptiveTrust.goe(adaptiveTrust));
+          // if (adaptiveTrust!= null) //find federatedResources with adaptiveTrust greater or equal than the specified value.
+            //builder.and(federatedResource.federatedResourceInfoMap.adaptiveTrust.goe(adaptiveTrust));
 
 
         Sort sortOrder = null; //if federatedResources need to be sorted, order by the specified field in direction specified

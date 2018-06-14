@@ -46,25 +46,28 @@ public class TrustManagerService {
 
         // Get all the federated resources ids in order to fetch them from the database
         Set<String> newFederatedResourcesIds = resourcesUpdated.getNewFederatedResources().stream()
-                .map(FederatedResource::getSymbioteId).collect(Collectors.toSet());
+                .map(FederatedResource::getAggregationId).collect(Collectors.toSet());
 
         // Find the stored federated resources and convert them to a map, in which the key is the internalId
-        Map<String, FederatedResource> storedFederatedResources = resourceRepository.findAllBySymbioteIdIn(newFederatedResourcesIds)
-                .stream().collect(Collectors.toMap(FederatedResource::getSymbioteId, federatedResource -> federatedResource));
+        Map<String, FederatedResource> storedFederatedResources = resourceRepository.findAllByAggregationIdIn(newFederatedResourcesIds)
+                .stream().collect(Collectors.toMap(FederatedResource::getAggregationId, federatedResource -> federatedResource));
 
         for (FederatedResource newFederatedResource : resourcesUpdated.getNewFederatedResources()) {
-            String symbioteId = newFederatedResource.getSymbioteId();
-            if (symbioteId == null)
+            String aggregationId = newFederatedResource.getAggregationId();
+            if (aggregationId == null)
                 continue;
 
             //check that it has not been provided twice. Not required
-            if (resourcesToBeStored.containsKey(symbioteId))
+            if (resourcesToBeStored.containsKey(aggregationId))
                     continue;
-                 else//we retrieve the federatedResource (with symbioteId) from the repository and update its adaptive trust value
-                if (storedFederatedResources.containsKey(symbioteId)) {
-                    FederatedResource federatedResource = storedFederatedResources.get(symbioteId);
-                    federatedResource.setAdaptiveTrust(newFederatedResource.getAdaptiveTrust());
-                    resourcesToBeStored.put(federatedResource.getSymbioteId(), federatedResource);
+                 else//we retrieve the federatedResource (with aggregationId) from the repository and update its adaptive trust value
+                if (storedFederatedResources.containsKey(aggregationId)) {
+                    FederatedResource federatedResource = storedFederatedResources.get(aggregationId);
+                    for(String fedId: federatedResource.getFederatedResourceInfoMap().keySet()) {
+                        Double adaptiveTrust= newFederatedResource.getFederatedResourceInfoMap().get(fedId).getAdaptiveTrust();
+                        federatedResource.getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(adaptiveTrust);
+                    }
+                    resourcesToBeStored.put(federatedResource.getAggregationId(), federatedResource);
                 } else {//adding new federatedResources. it shouldnt be the case
                     continue;//resourcesToBeStored.put(symbioteId, newFederatedResource);
                 }

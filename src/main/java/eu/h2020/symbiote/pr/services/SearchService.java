@@ -53,9 +53,9 @@ public class SearchService {
             predicate.and(p);
 
         if(near!=null) {//build and include predicate for the specified geospatial query part
-            List<String> symbioteIds = new ArrayList<>(resourceRepository.findAllByLocationCoordsIsWithin(near).stream()
-                    .map(FederatedResource::getSymbioteId).collect(Collectors.toSet()));//find symbioteIds (as they are unique id specifiers) of federatedResources within the circle specified
-            predicate.and(QFederatedResource.federatedResource.symbioteId.in(symbioteIds));//find federatedResources with the specified symbioteIds
+            List<String> aggregationIds = new ArrayList<>(resourceRepository.findAllByLocationCoordsIsWithin(near).stream()
+                    .map(FederatedResource::getAggregationId).collect(Collectors.toSet()));//find aggregationIds (as they are unique id specifiers) of federatedResources within the circle specified
+            predicate.and(QFederatedResource.federatedResource.aggregationId.in(aggregationIds));//find federatedResources with the specified aggregationIds
         }
 
         List<FederatedResource> resources=resourceRepository.findAll(predicate, sort);//federatedResources for the combined predicate. Results sorted if required

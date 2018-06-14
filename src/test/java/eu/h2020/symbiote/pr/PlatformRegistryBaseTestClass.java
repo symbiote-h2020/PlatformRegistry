@@ -127,7 +127,7 @@ public abstract class PlatformRegistryBaseTestClass {
         ids.add(String.format("%0" + Long.BYTES * 2 +"x@%s", id, platformId));
 
         //check it does not exist in the database
-        while(resourceRepository.findAllBySymbioteIdIn(ids).size()>0) {
+        while(resourceRepository.findAllByAggregationIdIn(ids).size()>0) {
             id = UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE;//randLong.nextLong();
             ids.clear();
             ids.add(String.format("%0" + Long.BYTES * 2 +"x@%s", id, platformId));
@@ -210,24 +210,31 @@ public abstract class PlatformRegistryBaseTestClass {
         id=createNewResourceId(platformId);
         newIds.clear();
         newIds.add(id);
-        assertTrue(resourceRepository.findAllBySymbioteIdIn(newIds).size()==0);
-        FederatedResource federatedResource1 = new FederatedResource(id, cloudResources.get(0), 10.0);
+        assertTrue(resourceRepository.findAllByAggregationIdIn(newIds).size()==0);
+        FederatedResource federatedResource1 = new FederatedResource(id, cloudResources.get(0));
+        for(String fedId: federatedResource1.getFederatedResourceInfoMap().keySet())
+            federatedResource1.getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(10.00);
         assertTrue(!existingIds.contains(id));
         existingIds.add(id);
 
         id=createNewResourceId(platformId);
         newIds.clear();
         newIds.add(id);
-        assertTrue(resourceRepository.findAllBySymbioteIdIn(newIds).size()==0);
-        FederatedResource federatedResource2 = new FederatedResource(id, cloudResources.get(1), 7.00);
+        assertTrue(resourceRepository.findAllByAggregationIdIn(newIds).size()==0);
+        FederatedResource federatedResource2 = new FederatedResource(id, cloudResources.get(1));
+        for(String fedId: federatedResource2.getFederatedResourceInfoMap().keySet())
+            federatedResource2.getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(7.00);
         assertTrue(!existingIds.contains(id));
         existingIds.add(id);
 
         id=createNewResourceId(platformId);
         newIds.clear();
         newIds.add(id);
-        assertTrue(resourceRepository.findAllBySymbioteIdIn(newIds).size()==0);
-        FederatedResource federatedResource3 = new FederatedResource(id, cloudResources.get(2), 5.00);
+        assertTrue(resourceRepository.findAllByAggregationIdIn(newIds).size()==0);
+        FederatedResource federatedResource3 = new FederatedResource(id, cloudResources.get(2));
+        for(String fedId: federatedResource3.getFederatedResourceInfoMap().keySet())
+            federatedResource3.getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(5.00);
+
         assertTrue(!existingIds.contains(id));
         existingIds.add(id);
 

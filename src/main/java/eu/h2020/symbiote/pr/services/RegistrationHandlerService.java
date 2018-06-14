@@ -75,12 +75,12 @@ public class RegistrationHandlerService {
 
             // if the federationInfo of the cloudResource is null, initialize it with a valid symbiote id
             if (cloudResource.getFederationInfo() == null ||
-                    cloudResource.getFederationInfo().getSymbioteId() == null) {
+                    cloudResource.getFederationInfo().getAggregationId() == null) {
 
                 // If federationInfo is null or the symbioteId == null that means we have a register operation
                 // So, we create the federationInfo
                 FederationInfoBean federationInfo = new FederationInfoBean();
-                federationInfo.setSymbioteId(createNewResourceId());
+                federationInfo.setAggregationId(createNewResourceId());
 
                 // todo: Set also the symbioteId inside sharingInformation
                 if (cloudResource.getFederationInfo() != null && cloudResource.getFederationInfo().getSharingInformation() != null)
@@ -113,7 +113,7 @@ public class RegistrationHandlerService {
         // Find the federations where the resources are no longer exposed to
         ResourcesDeletedMessage resourcesToBeRemoved = findResourcesToBeRemoved(cloudResources);
 
-        if (resourcesToBeRemoved.getDeletedFederatedResourcesMap().size() > 0)
+        if (resourcesToBeRemoved.getDeletedFederatedResources().size() > 0)
             rabbitTemplate.convertAndSend(subscriptionManagerExchange, smRemoveFederatedResourcesKey,
                     resourcesToBeRemoved);
 
@@ -143,17 +143,18 @@ public class RegistrationHandlerService {
 
         Set<String> internalIdsSet = new HashSet<>(internalIds);
 
-        Map<String, Set<String>> federatedResourcesRemoved = new HashMap<>();
+        Set<String> federatedResourcesRemoved = new HashSet<>();
 
         List<FederatedResource> federatedResources = resourceRepository.findAllByCloudResource_InternalIdIn(internalIdsSet);
 
         for (FederatedResource federatedResource : federatedResources) {
             if (federatedResource.getCloudResource() != null &&
                     federatedResource.getCloudResource().getFederationInfo() != null &&
-                    federatedResource.getCloudResource().getFederationInfo().getSymbioteId() != null) {
-                federatedResourcesRemoved.put(
-                        federatedResource.getCloudResource().getFederationInfo().getSymbioteId(),
-                        federatedResource.getCloudResource().getFederationInfo().getSharingInformation().keySet());
+                    federatedResource.getCloudResource().getFederationInfo().getAggregationId() != null) {
+
+                for(String fedId: federatedResource.getCloudResource().getFederationInfo().getSharingInformation().keySet())
+                federatedResourcesRemoved.add(
+                        federatedResource.getFederatedResourceInfoMap().get(fedId).getSymbioteId());
             }
         }
 
@@ -245,8 +246,8 @@ public class RegistrationHandlerService {
      */
     public List<CloudResource> unshareResources(Map<String, List<String>> resourcesToBeUnshared) {
 
-        // A map of the federated resources to be saved. The key is the symbioteId
-        Map<String, Set<String>> resourcesToBeRemoved = new HashMap<>();
+        // A set of the federated resources to be saved. The key is the symbioteId
+        Set<String> resourcesToBeRemoved = new HashSet<>();
 
         // First find all the resources that are going to be unshared
         Set<String> cloudResourcesIds = new HashSet<>();
@@ -268,11 +269,8 @@ public class RegistrationHandlerService {
                 FederatedResource storedFederatedResource = storedFederatedResources.get(internalId);
 
                 if (storedFederatedResource != null) {
-                    if (!resourcesToBeRemoved.containsKey(internalId))
-                        resourcesToBeRemoved.put(storedFederatedResource.getSymbioteId(), new HashSet<>());
-
-                    resourcesToBeRemoved.get(storedFederatedResource.getSymbioteId()).add(federationId);
-
+                    if(storedFederatedResource.getFederatedResourceInfoMap().containsKey(federationId))
+                   resourcesToBeRemoved.add(storedFederatedResource.getFederatedResourceInfoMap().get(federationId).getSymbioteId());
                     // Update also this info to the storedFederation
                     storedFederatedResource.unshareFromFederation(federationId);
                 }
@@ -294,17 +292,17 @@ public class RegistrationHandlerService {
 
         // Create a list of the federated resource ids which are stored in the database
         Set<String> storedFederatedResourceIds = cloudResources.stream()
-                .map(cloudResource -> cloudResource.getFederationInfo().getSymbioteId()).collect(Collectors.toSet());
+                .map(cloudResource -> cloudResource.getFederationInfo().getAggregationId()).collect(Collectors.toSet());
 
         // Fetch the stored federatedResources
-        List<FederatedResource> storedFederatedResources = resourceRepository.findAllBySymbioteIdIn(storedFederatedResourceIds);
+        List<FederatedResource> storedFederatedResources = resourceRepository.findAllByAggregationIdIn(storedFederatedResourceIds);
 
         // Create a map in of the updated CloudResources
         Map<String, CloudResource> updatedCloudResourcesMap = cloudResources.stream()
                 .collect(Collectors.toMap(CloudResource::getInternalId, cloudResource -> cloudResource));
 
         // Create the message to be sent to Subscription Manager
-        Map<String, Set<String>> removedFederatedResourcesMap = new HashMap<>();
+        Set<String> removedFederatedResources = new HashSet<>();
 
         for (FederatedResource federatedResource : storedFederatedResources) {
 
@@ -324,21 +322,16 @@ public class RegistrationHandlerService {
                     new HashSet<>() :
                     updatedCloudResource.getFederationInfo().getSharingInformation().keySet();
 
-            Set<String> removedFederations = new HashSet<>();
 
             // Find which federations were removed
             for (String id : oldFederations) {
                 if (!newFederations.contains(id))
-                    removedFederations.add(id);
+                    removedFederatedResources.add(federatedResource.getFederatedResourceInfoMap().get(id).getSymbioteId());
             }
-
-            if (removedFederations.size() > 0)
-                removedFederatedResourcesMap.put(federatedResource.getCloudResource().getFederationInfo().getSymbioteId(),
-                        removedFederations);
 
         }
 
-        return new ResourcesDeletedMessage(removedFederatedResourcesMap);
+        return new ResourcesDeletedMessage(removedFederatedResources);
     }
 
     private String createNewResourceId() {
@@ -351,7 +344,7 @@ public class RegistrationHandlerService {
         ids.add(String.format("%0" + Long.BYTES * 2 +"x@%s", id, platformId));
 
         //in case of collision, create a new id until it is unique
-        while(resourceRepository.findAllBySymbioteIdIn(ids).size()>0) {
+        while(resourceRepository.findAllByAggregationIdIn(ids).size()>0) {
             id = UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE;
             ids.clear();
             ids.add(String.format( "%0" + Long.BYTES * 2 +"x@%s", id, platformId));

@@ -18,14 +18,14 @@ import java.util.Set;
 @RepositoryRestResource(collectionResourceRel = "resources", path = "resources")
 public interface ResourceRepository extends MongoRepository<FederatedResource, String>, QueryDslPredicateExecutor<FederatedResource> {
     // ToDo: consider some optimized query here
-    List<FederatedResource> findAllBySymbioteIdIn(Set<String> ids);
+    List<FederatedResource> findAllByAggregationIdIn(Set<String> ids);
 
     List<FederatedResource> findAllByCloudResource_InternalIdIn(Set<String> internalIds);
 
     // Todo: remove this and replace it with a custom query to get this info from the cloudResource
     List<FederatedResource> findAllByFederationsContaining(String federationId);
 
-    List<FederatedResource> deleteAllBySymbioteIdIn(Set<String> ids);
+    List<FederatedResource> deleteAllByAggregationIdIn(Set<String> ids);
 
     List<FederatedResource> findAll(Predicate predicate, Sort sort);
 
