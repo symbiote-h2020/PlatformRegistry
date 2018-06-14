@@ -2,6 +2,7 @@ package eu.h2020.symbiote.pr;
 
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
 import eu.h2020.symbiote.cloud.model.internal.ResourcesAddedOrUpdatedMessage;
+import eu.h2020.symbiote.cloud.trust.model.TrustEntry;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
@@ -31,17 +32,30 @@ public class TrustManagerListenerTests extends PlatformRegistryBaseTestClass {
             TimeUnit.MILLISECONDS.sleep(100);
         }
 
-        for(String fedId: testFederatedResources.get(0).getFederatedResourceInfoMap().keySet())
+        Set <TrustEntry> resourceTrustUpdatedMessage = new HashSet<>();
+        for(String fedId: testFederatedResources.get(0).getFederatedResourceInfoMap().keySet()) {
             testFederatedResources.get(0).getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(17.00);
-        for(String fedId: testFederatedResources.get(1).getFederatedResourceInfoMap().keySet())
+            TrustEntry trustEntry = new TrustEntry(TrustEntry.Type.ADAPTIVE_RESOURCE_TRUST, testFederatedResources.get(0).getPlatformId(), testFederatedResources.get(0).getFederatedResourceInfoMap().get(fedId).getSymbioteId());
+            trustEntry.updateEntry(17.00);
+            resourceTrustUpdatedMessage.add(trustEntry);
+        }
+        for(String fedId: testFederatedResources.get(1).getFederatedResourceInfoMap().keySet()) {
             testFederatedResources.get(1).getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(15.00);
-        for(String fedId: testFederatedResources.get(2).getFederatedResourceInfoMap().keySet())
+            TrustEntry trustEntry = new TrustEntry(TrustEntry.Type.ADAPTIVE_RESOURCE_TRUST, testFederatedResources.get(1).getPlatformId(), testFederatedResources.get(1).getFederatedResourceInfoMap().get(fedId).getSymbioteId());
+            trustEntry.updateEntry(15.00);
+            resourceTrustUpdatedMessage.add(trustEntry);
+        }
+        for(String fedId: testFederatedResources.get(2).getFederatedResourceInfoMap().keySet()) {
             testFederatedResources.get(2).getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(19.00);
+            TrustEntry trustEntry = new TrustEntry(TrustEntry.Type.ADAPTIVE_RESOURCE_TRUST, testFederatedResources.get(2).getPlatformId(), testFederatedResources.get(2).getFederatedResourceInfoMap().get(fedId).getSymbioteId());
+            trustEntry.updateEntry(19.00);
+            resourceTrustUpdatedMessage.add(trustEntry);
+        }
 
         assertEquals(3, resourceRepository.findAll().size());
 
         rabbitTemplate.convertAndSend(trustExchange, updateAdaptiveResourceTrustKey,
-                new ResourcesAddedOrUpdatedMessage(testFederatedResources));
+                resourceTrustUpdatedMessage);
 
         TimeUnit.SECONDS.sleep(2);
 

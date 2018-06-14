@@ -4,6 +4,7 @@ import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
 import eu.h2020.symbiote.cloud.model.internal.ResourceSharingInformation;
 import eu.h2020.symbiote.cloud.model.internal.ResourcesAddedOrUpdatedMessage;
 import eu.h2020.symbiote.cloud.model.internal.ResourcesDeletedMessage;
+import eu.h2020.symbiote.cloud.trust.model.TrustEntry;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
@@ -29,50 +30,42 @@ public class TrustManagerService {
         this.resourceRepository = resourceRepository;
     }
 
-
     /**
-     * Store the federated resources offered by the other platforms
+     * Update adaptive trust of federated resources offered by the other platforms
      *
-     * @param resourcesUpdated message received from Trust Manager notifying about new resources
+     * @param resourcesTrustUpdated message received from Trust Manager notifying about new trust values of federated resources
      */
-    public void updateFedResAdaptiveResourceTrust(ResourcesAddedOrUpdatedMessage resourcesUpdated) {
-        log.trace("updateFedResAdaptiveResourceTrust: " + ReflectionToStringBuilder.toString(resourcesUpdated));
-
-        // Todo: maybe remove the platform resources from the message.
-        // Platform resources should not be present here. Only, federated resources offered by other platforms should be
-        // in the NewResourceMessage
+    public void updateFedResAdaptiveResourceTrust(Set <TrustEntry> resourcesTrustUpdated) {//(ResourcesAddedOrUpdatedMessage resourcesUpdated) {
+        log.trace("updateFedResAdaptiveResourceTrust: " + ReflectionToStringBuilder.toString(resourcesTrustUpdated));
 
         Map<String, FederatedResource> resourcesToBeStored = new HashMap<>();
 
-        // Get all the federated resources ids in order to fetch them from the database
-        Set<String> newFederatedResourcesIds = resourcesUpdated.getNewFederatedResources().stream()
-                .map(FederatedResource::getAggregationId).collect(Collectors.toSet());
+        // Get the federated resource id in order to fetch it from the database
+        Set<String> newFederatedResourcesIds = new HashSet<>();
+        for(TrustEntry resourceTrustUpdated: resourcesTrustUpdated) {
+            String aggregationId = resourceTrustUpdated.getResourceId().split("@", 3)[0] +
+                    "@" + resourceTrustUpdated.getResourceId().split("@", 3)[1];
+            newFederatedResourcesIds.add(aggregationId);
+
+        }
 
         // Find the stored federated resources and convert them to a map, in which the key is the internalId
         Map<String, FederatedResource> storedFederatedResources = resourceRepository.findAllByAggregationIdIn(newFederatedResourcesIds)
                 .stream().collect(Collectors.toMap(FederatedResource::getAggregationId, federatedResource -> federatedResource));
 
-        for (FederatedResource newFederatedResource : resourcesUpdated.getNewFederatedResources()) {
-            String aggregationId = newFederatedResource.getAggregationId();
-            if (aggregationId == null)
-                continue;
+        for(TrustEntry resourceTrustUpdated: resourcesTrustUpdated) {
 
-            //check that it has not been provided twice. Not required
-            if (resourcesToBeStored.containsKey(aggregationId))
-                    continue;
-                 else//we retrieve the federatedResource (with aggregationId) from the repository and update its adaptive trust value
-                if (storedFederatedResources.containsKey(aggregationId)) {
-                    FederatedResource federatedResource = storedFederatedResources.get(aggregationId);
-                    for(String fedId: federatedResource.getFederatedResourceInfoMap().keySet()) {
-                        Double adaptiveTrust= newFederatedResource.getFederatedResourceInfoMap().get(fedId).getAdaptiveTrust();
-                        federatedResource.getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(adaptiveTrust);
-                    }
-                    resourcesToBeStored.put(federatedResource.getAggregationId(), federatedResource);
-                } else {//adding new federatedResources. it shouldnt be the case
-                    continue;//resourcesToBeStored.put(symbioteId, newFederatedResource);
-                }
+            String aggregationId = resourceTrustUpdated.getResourceId().split("@", 3)[0] +
+                    "@" + resourceTrustUpdated.getResourceId().split("@", 3)[1];
+            String fedId = resourceTrustUpdated.getResourceId().split("@", 3)[2];
+
+            if (storedFederatedResources.containsKey(aggregationId)) {
+                FederatedResource federatedResource = storedFederatedResources.get(aggregationId);
+                federatedResource.getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(resourceTrustUpdated.getValue());
+                resourcesToBeStored.put(federatedResource.getAggregationId(), federatedResource);
+            }
+
         }
-
         resourceRepository.save(new ArrayList<>(resourcesToBeStored.values()));
     }
 

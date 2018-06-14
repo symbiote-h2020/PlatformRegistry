@@ -104,6 +104,7 @@ dependencies {
     // querydsl
     compile("com.querydsl:querydsl-mongodb:${querydslVersion}")
     compile("com.querydsl:querydsl-apt:${querydslVersion}")
+    compile("com.querydsl:querydsl-jpa:${querydslVersion}")
 
     // Test only
     testCompile('junit:junit:4.+')

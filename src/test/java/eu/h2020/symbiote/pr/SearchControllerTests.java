@@ -379,7 +379,7 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
     }
 
 
-  //  @Test
+//    @Test
     public void listResourcesInPredicateByTrust() throws Exception {
         List<FederatedResource> federatedResourceList = createTestFederatedResources(platformId);
         resourceRepository.save(federatedResourceList);

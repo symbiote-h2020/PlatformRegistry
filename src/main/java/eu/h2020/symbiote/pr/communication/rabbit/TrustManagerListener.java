@@ -2,6 +2,7 @@ package eu.h2020.symbiote.pr.communication.rabbit;
 
 import eu.h2020.symbiote.cloud.model.internal.ResourcesAddedOrUpdatedMessage;
 import eu.h2020.symbiote.cloud.model.internal.ResourcesDeletedMessage;
+import eu.h2020.symbiote.cloud.trust.model.TrustEntry;
 import eu.h2020.symbiote.pr.services.TrustManagerService;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
@@ -12,6 +13,8 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.Set;
 
 /**
  * This class is used as a simple listener.
@@ -32,7 +35,7 @@ public class TrustManagerListener {
 
     /**
      * Spring AMQP Listener for listening to new FederationResources updates from Trust Manager.
-     * @param resourcesUpdated message received from Trust Manager
+     * @param resourcesTrustUpdated message received from Trust Manager
      */
     @RabbitListener(
             bindings = @QueueBinding(
@@ -51,15 +54,15 @@ public class TrustManagerListener {
                             type = "${rabbit.exchange.trust.type}"),
                     key = "${rabbit.routingKey.trust.updateAdaptiveResourceTrust}")
     )
-    public void updateAdaptiveResourceTrust(ResourcesAddedOrUpdatedMessage resourcesUpdated) {
+    public void updateAdaptiveResourceTrust(Set<TrustEntry> resourcesTrustUpdated) {//(ResourcesAddedOrUpdatedMessage resourcesUpdated) {
         log.info("Received updated federated resources from Trust Manager: " +
-                ReflectionToStringBuilder.toString(resourcesUpdated));
+                ReflectionToStringBuilder.toString(resourcesTrustUpdated));
 
         // ToDo: rework this to return proper error messages and/or do not requeue the request
         try {
-            trustManagerService.updateFedResAdaptiveResourceTrust(resourcesUpdated);
+            trustManagerService.updateFedResAdaptiveResourceTrust(resourcesTrustUpdated);
         } catch (Exception e) {
-            log.info("Exception thrown during saving federated resources", e);
+            log.info("Exception thrown during updating trust of federated resources", e);
         }
     }
 

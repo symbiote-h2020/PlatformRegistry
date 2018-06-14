@@ -2,8 +2,11 @@ package eu.h2020.symbiote.pr.communication.rest.controllers;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Predicate;
+import com.querydsl.jpa.JPAExpressions;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
 import eu.h2020.symbiote.cloud.model.internal.QFederatedResource;
+import eu.h2020.symbiote.cloud.model.internal.QFederatedResourceInfo;
 import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.pr.services.SearchService;
 import org.apache.commons.logging.Log;
@@ -93,8 +96,12 @@ public class SearchController {
         if(aggregationIds!=null) //find federatedResources with symbioteid in the specified list
             builder.and(federatedResource.aggregationId.in(aggregationIds));
 
-        if(resourceFederations!=null)//if federatedResource belongs to any of the federations specified
-                builder.and(federatedResource.federations.any().in(resourceFederations));
+        if(resourceFederations!=null) {//if federatedResource belongs to any of the federations specified
+            BooleanBuilder predicateOnFedIds = new BooleanBuilder();
+            for (String fedId : resourceFederations)
+                predicateOnFedIds.or(federatedResource.federatedResourceInfoMap.containsKey(fedId));
+            builder.and(predicateOnFedIds);
+        }
 
         //TODO: fix querydsl problem with instanceOf use to remove the added resourceType field
         if(resourceType!=null) {//find federatedResources where resource is instanceof resourceType.  federatedResource's resourceType contains the simple name of resource's class.
@@ -123,7 +130,18 @@ public class SearchController {
 
           // if (adaptiveTrust!= null) //find federatedResources with adaptiveTrust greater or equal than the specified value.
             //builder.and(federatedResource.federatedResourceInfoMap.adaptiveTrust.goe(adaptiveTrust));
+        if (adaptiveTrust!= null) {
+            BooleanBuilder predicateOnAdaptiveTrust = new BooleanBuilder();
 
+            QFederatedResourceInfo qFederatedResourceInfo = QFederatedResourceInfo.federatedResourceInfo;
+            QFederatedResourceInfo info = new QFederatedResourceInfo("info");
+
+           // builder.and(
+          //          federatedResource.federatedResourceInfoMap.get("adaptiveTrust").in(
+            //        JPAExpressions.selectFrom(federatedResource.federatedResourceInfoMap).where(info.adaptiveTrust.goe(adaptiveTrust)).fetch();
+           // ));
+           // System.out.println();
+        }
 
         Sort sortOrder = null; //if federatedResources need to be sorted, order by the specified field in direction specified
         if(sort!=null)
