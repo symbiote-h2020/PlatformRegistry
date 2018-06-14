@@ -33,31 +33,23 @@ public class TrustManagerService {
     /**
      * Update adaptive trust of federated resources offered by the other platforms
      *
-     * @param resourcesTrustUpdated message received from Trust Manager notifying about new trust values of federated resources
+     * @param resourceTrustUpdated message received from Trust Manager notifying about new trust values of federated resources
      */
-    public void updateFedResAdaptiveResourceTrust(Set <TrustEntry> resourcesTrustUpdated) {//(ResourcesAddedOrUpdatedMessage resourcesUpdated) {
-        log.trace("updateFedResAdaptiveResourceTrust: " + ReflectionToStringBuilder.toString(resourcesTrustUpdated));
+    public void updateFedResAdaptiveResourceTrust(TrustEntry resourceTrustUpdated) {
+        log.trace("updateFedResAdaptiveResourceTrust: " + ReflectionToStringBuilder.toString(resourceTrustUpdated));
 
         Map<String, FederatedResource> resourcesToBeStored = new HashMap<>();
 
         // Get the federated resource id in order to fetch it from the database
         Set<String> newFederatedResourcesIds = new HashSet<>();
-        for(TrustEntry resourceTrustUpdated: resourcesTrustUpdated) {
             String aggregationId = resourceTrustUpdated.getResourceId().split("@", 3)[0] +
                     "@" + resourceTrustUpdated.getResourceId().split("@", 3)[1];
-            newFederatedResourcesIds.add(aggregationId);
-
-        }
+        String fedId = resourceTrustUpdated.getResourceId().split("@", 3)[2];
+        newFederatedResourcesIds.add(aggregationId);
 
         // Find the stored federated resources and convert them to a map, in which the key is the internalId
         Map<String, FederatedResource> storedFederatedResources = resourceRepository.findAllByAggregationIdIn(newFederatedResourcesIds)
                 .stream().collect(Collectors.toMap(FederatedResource::getAggregationId, federatedResource -> federatedResource));
-
-        for(TrustEntry resourceTrustUpdated: resourcesTrustUpdated) {
-
-            String aggregationId = resourceTrustUpdated.getResourceId().split("@", 3)[0] +
-                    "@" + resourceTrustUpdated.getResourceId().split("@", 3)[1];
-            String fedId = resourceTrustUpdated.getResourceId().split("@", 3)[2];
 
             if (storedFederatedResources.containsKey(aggregationId)) {
                 FederatedResource federatedResource = storedFederatedResources.get(aggregationId);
@@ -65,9 +57,7 @@ public class TrustManagerService {
                 resourcesToBeStored.put(federatedResource.getAggregationId(), federatedResource);
             }
 
-        }
         resourceRepository.save(new ArrayList<>(resourcesToBeStored.values()));
     }
-
 
 }

@@ -32,32 +32,38 @@ public class TrustManagerListenerTests extends PlatformRegistryBaseTestClass {
             TimeUnit.MILLISECONDS.sleep(100);
         }
 
-        Set <TrustEntry> resourceTrustUpdatedMessage = new HashSet<>();
         for(String fedId: testFederatedResources.get(0).getFederatedResourceInfoMap().keySet()) {
             testFederatedResources.get(0).getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(17.00);
             TrustEntry trustEntry = new TrustEntry(TrustEntry.Type.ADAPTIVE_RESOURCE_TRUST, testFederatedResources.get(0).getPlatformId(), testFederatedResources.get(0).getFederatedResourceInfoMap().get(fedId).getSymbioteId());
             trustEntry.updateEntry(17.00);
-            resourceTrustUpdatedMessage.add(trustEntry);
+            rabbitTemplate.convertAndSend(trustExchange, updateAdaptiveResourceTrustKey,
+                    trustEntry);
+            TimeUnit.SECONDS.sleep(1);
+
         }
+
         for(String fedId: testFederatedResources.get(1).getFederatedResourceInfoMap().keySet()) {
             testFederatedResources.get(1).getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(15.00);
             TrustEntry trustEntry = new TrustEntry(TrustEntry.Type.ADAPTIVE_RESOURCE_TRUST, testFederatedResources.get(1).getPlatformId(), testFederatedResources.get(1).getFederatedResourceInfoMap().get(fedId).getSymbioteId());
             trustEntry.updateEntry(15.00);
-            resourceTrustUpdatedMessage.add(trustEntry);
+            rabbitTemplate.convertAndSend(trustExchange, updateAdaptiveResourceTrustKey,
+                    trustEntry);
+            TimeUnit.SECONDS.sleep(1);
         }
         for(String fedId: testFederatedResources.get(2).getFederatedResourceInfoMap().keySet()) {
             testFederatedResources.get(2).getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(19.00);
             TrustEntry trustEntry = new TrustEntry(TrustEntry.Type.ADAPTIVE_RESOURCE_TRUST, testFederatedResources.get(2).getPlatformId(), testFederatedResources.get(2).getFederatedResourceInfoMap().get(fedId).getSymbioteId());
             trustEntry.updateEntry(19.00);
-            resourceTrustUpdatedMessage.add(trustEntry);
+            rabbitTemplate.convertAndSend(trustExchange, updateAdaptiveResourceTrustKey,
+                    trustEntry);
+            TimeUnit.SECONDS.sleep(1);
         }
 
         assertEquals(3, resourceRepository.findAll().size());
 
-        rabbitTemplate.convertAndSend(trustExchange, updateAdaptiveResourceTrustKey,
-                resourceTrustUpdatedMessage);
 
-        TimeUnit.SECONDS.sleep(2);
+
+
 
 //        // Checking what is stored in the database
         List<FederatedResource> stored = resourceRepository.findAll();

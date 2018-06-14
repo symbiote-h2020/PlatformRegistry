@@ -54,13 +54,13 @@ public class TrustManagerListener {
                             type = "${rabbit.exchange.trust.type}"),
                     key = "${rabbit.routingKey.trust.updateAdaptiveResourceTrust}")
     )
-    public void updateAdaptiveResourceTrust(Set<TrustEntry> resourcesTrustUpdated) {//(ResourcesAddedOrUpdatedMessage resourcesUpdated) {
-        log.info("Received updated federated resources from Trust Manager: " +
-                ReflectionToStringBuilder.toString(resourcesTrustUpdated));
+    public void updateAdaptiveResourceTrust(TrustEntry resourceTrustUpdated) {
+        log.info("Received updated adaptive trust of federated resource from Trust Manager: " +
+                ReflectionToStringBuilder.toString(resourceTrustUpdated));
 
         // ToDo: rework this to return proper error messages and/or do not requeue the request
         try {
-            trustManagerService.updateFedResAdaptiveResourceTrust(resourcesTrustUpdated);
+            trustManagerService.updateFedResAdaptiveResourceTrust(resourceTrustUpdated);
         } catch (Exception e) {
             log.info("Exception thrown during updating trust of federated resources", e);
         }
