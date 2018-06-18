@@ -33,7 +33,7 @@ public class TrustManagerListenerTests extends PlatformRegistryBaseTestClass {
         }
 
         for(String fedId: testFederatedResources.get(0).getFederatedResourceInfoMap().keySet()) {
-            testFederatedResources.get(0).getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(17.00);
+            testFederatedResources.get(0).setAdaptiveTrust(17.00);
             TrustEntry trustEntry = new TrustEntry(TrustEntry.Type.ADAPTIVE_RESOURCE_TRUST, testFederatedResources.get(0).getPlatformId(), testFederatedResources.get(0).getFederatedResourceInfoMap().get(fedId).getSymbioteId());
             trustEntry.updateEntry(17.00);
             rabbitTemplate.convertAndSend(trustExchange, updateAdaptiveResourceTrustKey,
@@ -43,7 +43,7 @@ public class TrustManagerListenerTests extends PlatformRegistryBaseTestClass {
         }
 
         for(String fedId: testFederatedResources.get(1).getFederatedResourceInfoMap().keySet()) {
-            testFederatedResources.get(1).getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(15.00);
+            testFederatedResources.get(1).setAdaptiveTrust(15.00);
             TrustEntry trustEntry = new TrustEntry(TrustEntry.Type.ADAPTIVE_RESOURCE_TRUST, testFederatedResources.get(1).getPlatformId(), testFederatedResources.get(1).getFederatedResourceInfoMap().get(fedId).getSymbioteId());
             trustEntry.updateEntry(15.00);
             rabbitTemplate.convertAndSend(trustExchange, updateAdaptiveResourceTrustKey,
@@ -51,7 +51,7 @@ public class TrustManagerListenerTests extends PlatformRegistryBaseTestClass {
             TimeUnit.SECONDS.sleep(1);
         }
         for(String fedId: testFederatedResources.get(2).getFederatedResourceInfoMap().keySet()) {
-            testFederatedResources.get(2).getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(19.00);
+            testFederatedResources.get(2).setAdaptiveTrust(19.00);
             TrustEntry trustEntry = new TrustEntry(TrustEntry.Type.ADAPTIVE_RESOURCE_TRUST, testFederatedResources.get(2).getPlatformId(), testFederatedResources.get(2).getFederatedResourceInfoMap().get(fedId).getSymbioteId());
             trustEntry.updateEntry(19.00);
             rabbitTemplate.convertAndSend(trustExchange, updateAdaptiveResourceTrustKey,
@@ -71,15 +71,15 @@ public class TrustManagerListenerTests extends PlatformRegistryBaseTestClass {
 
         FederatedResource resource1 = resourceRepository.findOne(testFederatedResources.get(0).getAggregationId());
         for(String fedId: resource1.getFederatedResourceInfoMap().keySet())
-            assertTrue(resource1.getFederatedResourceInfoMap().get(fedId).getAdaptiveTrust().equals(17.0));
+            assertTrue(resource1.getAdaptiveTrust().equals(17.0));
 
         FederatedResource resource2 = resourceRepository.findOne(testFederatedResources.get(1).getAggregationId());
         for(String fedId: resource2.getFederatedResourceInfoMap().keySet())
-            assertTrue(resource2.getFederatedResourceInfoMap().get(fedId).getAdaptiveTrust().equals(15.0));
+            assertTrue(resource2.getAdaptiveTrust().equals(15.0));
 
         FederatedResource resource3 = resourceRepository.findOne(testFederatedResources.get(2).getAggregationId());
         for(String fedId: resource3.getFederatedResourceInfoMap().keySet())
-            assertTrue(resource3.getFederatedResourceInfoMap().get(fedId).getAdaptiveTrust().equals(19.0));
+            assertTrue(resource3.getAdaptiveTrust().equals(19.0));
 
 
     }

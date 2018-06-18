@@ -22,9 +22,6 @@ public interface ResourceRepository extends MongoRepository<FederatedResource, S
 
     List<FederatedResource> findAllByCloudResource_InternalIdIn(Set<String> internalIds);
 
-    // Todo: remove this and replace it with a custom query to get this info from the cloudResource
-    List<FederatedResource> findAllByFederationsContaining(String federationId);
-
     List<FederatedResource> deleteAllByAggregationIdIn(Set<String> ids);
 
     List<FederatedResource> findAll(Predicate predicate, Sort sort);

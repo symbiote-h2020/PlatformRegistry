@@ -129,7 +129,7 @@ public class SubscriptionManagerService {
                     federatedResource.unshareFromFederation(federationId);
 
                     // If the resource is not shared in any federation any more, we remove it from the repository
-                    if (federatedResource.getFederations().size() == 0) {
+                    if (federatedResource.getFederatedResourceInfoMap().size() == 0) {
                         storedFederatedResourcesMap.remove(aggregationId);
                         unsharedResourcesIds.add(aggregationId);
                     }

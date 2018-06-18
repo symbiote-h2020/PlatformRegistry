@@ -225,7 +225,7 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(1)))
-                .andExpect(jsonPath("$.resources[0].federations", hasSize(2
+                .andExpect(jsonPath("$.resources[0].federatedResourceInfoMap.*", hasSize(2
                 )));
     }
 
@@ -379,7 +379,7 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
     }
 
 
-//    @Test
+    @Test
     public void listResourcesInPredicateByTrust() throws Exception {
         List<FederatedResource> federatedResourceList = createTestFederatedResources(platformId);
         resourceRepository.save(federatedResourceList);

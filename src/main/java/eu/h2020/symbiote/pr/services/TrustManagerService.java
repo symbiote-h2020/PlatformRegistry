@@ -53,7 +53,7 @@ public class TrustManagerService {
 
             if (storedFederatedResources.containsKey(aggregationId)) {
                 FederatedResource federatedResource = storedFederatedResources.get(aggregationId);
-                federatedResource.getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(resourceTrustUpdated.getValue());
+                federatedResource.setAdaptiveTrust(resourceTrustUpdated.getValue());
                 resourcesToBeStored.put(federatedResource.getAggregationId(), federatedResource);
             }
 

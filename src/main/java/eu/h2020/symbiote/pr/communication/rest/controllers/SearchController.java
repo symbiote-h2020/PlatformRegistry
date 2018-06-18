@@ -43,14 +43,20 @@ public class SearchController {
     @GetMapping("/list_resources")
     public ResponseEntity listAllResources(@RequestHeader HttpHeaders httpHeaders) {
         log.trace("Request to /list_resources");
-        return searchService.listResources(httpHeaders);
+        return searchService.listResources(httpHeaders);//searchService.listByPredicate(httpHeaders, null, null, null);
     }
 
     @GetMapping("/list_federation_resources/{federationId}")
     public ResponseEntity listFederationResources(@RequestHeader HttpHeaders httpHeaders,
                                                   @PathVariable String federationId) {
         log.trace("Request to /list_federation_resources");
-        return searchService.listFederationResources(httpHeaders, federationId);
+
+        BooleanBuilder builder=new BooleanBuilder();
+        QFederatedResource federatedResource = QFederatedResource.federatedResource;
+
+        builder.and(federatedResource.federatedResourceInfoMap.containsKey(federationId));
+
+        return searchService.listByPredicate(httpHeaders, builder, null, null);
     }
 
     @GetMapping("/list_resources_in_predicate/")
@@ -124,24 +130,11 @@ public class SearchController {
             locationNear = new Circle(locationLong, locationLat, maxDistance);
 
 
-        if (resourceTrust!= null) { //find federatedResources with resourceTrust greater or equal than the specified value.
-                builder.and(federatedResource.cloudResource.federationInfo.resourceTrust.goe(resourceTrust));
-        }
+        if (resourceTrust!= null) //find federatedResources with resourceTrust greater or equal than the specified value.
+            builder.and(federatedResource.cloudResource.federationInfo.resourceTrust.goe(resourceTrust));
 
-          // if (adaptiveTrust!= null) //find federatedResources with adaptiveTrust greater or equal than the specified value.
-            //builder.and(federatedResource.federatedResourceInfoMap.adaptiveTrust.goe(adaptiveTrust));
-        if (adaptiveTrust!= null) {
-            BooleanBuilder predicateOnAdaptiveTrust = new BooleanBuilder();
-
-            QFederatedResourceInfo qFederatedResourceInfo = QFederatedResourceInfo.federatedResourceInfo;
-            QFederatedResourceInfo info = new QFederatedResourceInfo("info");
-
-           // builder.and(
-          //          federatedResource.federatedResourceInfoMap.get("adaptiveTrust").in(
-            //        JPAExpressions.selectFrom(federatedResource.federatedResourceInfoMap).where(info.adaptiveTrust.goe(adaptiveTrust)).fetch();
-           // ));
-           // System.out.println();
-        }
+        if (adaptiveTrust!= null)
+            builder.and(federatedResource.adaptiveTrust.goe(adaptiveTrust));
 
         Sort sortOrder = null; //if federatedResources need to be sorted, order by the specified field in direction specified
         if(sort!=null)

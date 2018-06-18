@@ -80,19 +80,4 @@ public class SearchService {
                 HttpStatus.OK, (String) securityChecks.getBody());
     }
 
-    public ResponseEntity listFederationResources(HttpHeaders httpHeaders, String federationId) {
-        log.trace("listFederationResources request");
-
-        ResponseEntity securityChecks = AuthorizationServiceHelper.checkSecurityRequestAndCreateServiceResponse(
-                authorizationService, httpHeaders);
-        if (securityChecks.getStatusCode() != HttpStatus.OK)
-            return securityChecks;
-
-        List<FederatedResource> resources = resourceRepository.findAllByFederationsContaining(federationId);
-        FederationSearchResult response = new FederationSearchResult(resources);
-
-        return AuthorizationServiceHelper.addSecurityService(response, new HttpHeaders(),
-                HttpStatus.OK, (String) securityChecks.getBody());
-    }
-
 }

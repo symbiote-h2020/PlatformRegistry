@@ -43,8 +43,8 @@ public class SubscriptionManagerListenerTests extends PlatformRegistryBaseTestCl
 
         FederatedResource resource1 = resourceRepository.findOne(testFederatedResources.get(0).getAggregationId());
         assertTrue(resource1.getCloudResource().getResource() instanceof StationarySensor);
-        assertEquals(2, resource1.getFederations().size());
-        assertTrue(resource1.getFederations().containsAll(Arrays.asList(federation1, federation2)));
+        assertEquals(2, resource1.getFederatedResourceInfoMap().size());
+        assertTrue(resource1.getFederatedResourceInfoMap().keySet().containsAll(Arrays.asList(federation1, federation2)));
         assertEquals(2, resource1.getCloudResource().getFederationInfo().getSharingInformation().size());
         assertTrue(resource1.getCloudResource().getFederationInfo().getSharingInformation().containsKey(federation1));
         assertTrue(resource1.getCloudResource().getFederationInfo().getSharingInformation().containsKey(federation2));
@@ -52,15 +52,15 @@ public class SubscriptionManagerListenerTests extends PlatformRegistryBaseTestCl
 
         FederatedResource resource2 = resourceRepository.findOne(testFederatedResources.get(1).getAggregationId());
         assertTrue(resource2.getCloudResource().getResource() instanceof Actuator);
-        assertEquals(1, resource2.getFederations().size());
-        assertTrue(resource2.getFederations().contains(federation1));
+        assertEquals(1, resource2.getFederatedResourceInfoMap().size());
+        assertTrue(resource2.getFederatedResourceInfoMap().containsKey(federation1));
         assertEquals(1, resource2.getCloudResource().getFederationInfo().getSharingInformation().size());
         assertTrue(resource2.getCloudResource().getFederationInfo().getSharingInformation().containsKey(federation1));
 
         FederatedResource resource3 = resourceRepository.findOne(testFederatedResources.get(2).getAggregationId());
         assertTrue(resource3.getCloudResource().getResource() instanceof Service);
-        assertEquals(1, resource3.getFederations().size());
-        assertTrue(resource3.getFederations().contains(federation1));
+        assertEquals(1, resource3.getFederatedResourceInfoMap().size());
+        assertTrue(resource3.getFederatedResourceInfoMap().containsKey(federation1));
         assertEquals(1, resource3.getCloudResource().getFederationInfo().getSharingInformation().size());
         assertTrue(resource3.getCloudResource().getFederationInfo().getSharingInformation().containsKey(federation1));
     }

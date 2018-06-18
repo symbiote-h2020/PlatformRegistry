@@ -211,9 +211,7 @@ public abstract class PlatformRegistryBaseTestClass {
         newIds.clear();
         newIds.add(id);
         assertTrue(resourceRepository.findAllByAggregationIdIn(newIds).size()==0);
-        FederatedResource federatedResource1 = new FederatedResource(id, cloudResources.get(0));
-        for(String fedId: federatedResource1.getFederatedResourceInfoMap().keySet())
-            federatedResource1.getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(10.00);
+        FederatedResource federatedResource1 = new FederatedResource(id, cloudResources.get(0), 10.00);
         assertTrue(!existingIds.contains(id));
         existingIds.add(id);
 
@@ -221,9 +219,7 @@ public abstract class PlatformRegistryBaseTestClass {
         newIds.clear();
         newIds.add(id);
         assertTrue(resourceRepository.findAllByAggregationIdIn(newIds).size()==0);
-        FederatedResource federatedResource2 = new FederatedResource(id, cloudResources.get(1));
-        for(String fedId: federatedResource2.getFederatedResourceInfoMap().keySet())
-            federatedResource2.getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(7.00);
+        FederatedResource federatedResource2 = new FederatedResource(id, cloudResources.get(1), 7.00);
         assertTrue(!existingIds.contains(id));
         existingIds.add(id);
 
@@ -231,9 +227,7 @@ public abstract class PlatformRegistryBaseTestClass {
         newIds.clear();
         newIds.add(id);
         assertTrue(resourceRepository.findAllByAggregationIdIn(newIds).size()==0);
-        FederatedResource federatedResource3 = new FederatedResource(id, cloudResources.get(2));
-        for(String fedId: federatedResource3.getFederatedResourceInfoMap().keySet())
-            federatedResource3.getFederatedResourceInfoMap().get(fedId).setAdaptiveTrust(5.00);
+        FederatedResource federatedResource3 = new FederatedResource(id, cloudResources.get(2), 5.00);
 
         assertTrue(!existingIds.contains(id));
         existingIds.add(id);
