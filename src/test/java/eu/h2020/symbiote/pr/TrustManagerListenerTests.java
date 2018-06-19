@@ -61,11 +61,7 @@ public class TrustManagerListenerTests extends PlatformRegistryBaseTestClass {
 
         assertEquals(3, resourceRepository.findAll().size());
 
-
-
-
-
-//        // Checking what is stored in the database
+        // Checking what is stored in the database
         List<FederatedResource> stored = resourceRepository.findAll();
         assertEquals(3, stored.size());
 

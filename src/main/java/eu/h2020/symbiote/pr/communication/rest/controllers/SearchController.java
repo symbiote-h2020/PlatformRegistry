@@ -2,11 +2,8 @@ package eu.h2020.symbiote.pr.communication.rest.controllers;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Predicate;
-import com.querydsl.jpa.JPAExpressions;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
 import eu.h2020.symbiote.cloud.model.internal.QFederatedResource;
-import eu.h2020.symbiote.cloud.model.internal.QFederatedResourceInfo;
 import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.pr.services.SearchService;
 import org.apache.commons.logging.Log;
@@ -43,7 +40,8 @@ public class SearchController {
     @GetMapping("/list_resources")
     public ResponseEntity listAllResources(@RequestHeader HttpHeaders httpHeaders) {
         log.trace("Request to /list_resources");
-        return searchService.listResources(httpHeaders);//searchService.listByPredicate(httpHeaders, null, null, null);
+
+        return searchService.listByPredicate(httpHeaders, null, null, null);
     }
 
     @GetMapping("/list_federation_resources/{federationId}")
@@ -53,12 +51,32 @@ public class SearchController {
 
         BooleanBuilder builder=new BooleanBuilder();
         QFederatedResource federatedResource = QFederatedResource.federatedResource;
-
         builder.and(federatedResource.federatedResourceInfoMap.containsKey(federationId));
 
         return searchService.listByPredicate(httpHeaders, builder, null, null);
     }
 
+    /**
+     * Endpoint for quering federated resources using HTTP GET requests,
+     * filtering and sorting the available resources according to the
+     * specified request parameters
+     *
+     * @param name             a list with the resource names
+     * @param description       the resource description
+     * @param id                the id for identifying the resource in the symbIoTe federation (aggregationId)
+     * @param federationId      the list of federation ids
+     * @param observed_property property observed by resource (sensor); can indicate more than one
+     *                          observed property
+     * @param resource_type     type of queried resource e.g. stationarySensor
+     * @param location_name     name of resource location; can be a set of different locations
+     * @param location_lat      latitude of resource location; it concerns WGS84 locations for devices
+     * @param location_long     longitude of resource location; it concerns WGS84 locations for devices
+     * @param max_distance      maximal distance from specified resource latitude and longitude (in meters);
+     *                          the radius used for geospatial queries
+     * @param sort              the field to be used for sorting the resources
+     * @param httpHeaders request headers
+     * @return ResponseEntity   query result as body or null along with appropriate error HTTP status code
+     */
     @GetMapping("/list_resources_in_predicate/")
     public ResponseEntity listResourcesInPredicate(@RequestHeader HttpHeaders httpHeaders,
                                                    @QuerydslPredicate(root = FederatedResource.class) Predicate p,
@@ -76,7 +94,6 @@ public class SearchController {
                                                    @RequestParam(value="adaptive_trust", required = false) Double adaptiveTrust,
                                                    @RequestParam(value="sort", required = false) String sort
     ) {
-
         log.trace("Request to /list_resources_in_predicate");
 
         BooleanBuilder builder=new BooleanBuilder();
@@ -128,7 +145,6 @@ public class SearchController {
         Circle locationNear = null;//find federatedResources that are near (within radius) of the specified location coordinates
         if(locationLat != null && locationLong != null && maxDistance !=null)
             locationNear = new Circle(locationLong, locationLat, maxDistance);
-
 
         if (resourceTrust!= null) //find federatedResources with resourceTrust greater or equal than the specified value.
             builder.and(federatedResource.cloudResource.federationInfo.resourceTrust.goe(resourceTrust));

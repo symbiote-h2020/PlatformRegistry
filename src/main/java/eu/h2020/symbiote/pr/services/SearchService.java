@@ -53,27 +53,17 @@ public class SearchService {
             predicate.and(p);
 
         if(near!=null) {//build and include predicate for the specified geospatial query part
+
             List<String> aggregationIds = new ArrayList<>(resourceRepository.findAllByLocationCoordsIsWithin(near).stream()
                     .map(FederatedResource::getAggregationId).collect(Collectors.toSet()));//find aggregationIds (as they are unique id specifiers) of federatedResources within the circle specified
             predicate.and(QFederatedResource.federatedResource.aggregationId.in(aggregationIds));//find federatedResources with the specified aggregationIds
         }
 
-        List<FederatedResource> resources=resourceRepository.findAll(predicate, sort);//federatedResources for the combined predicate. Results sorted if required
-        FederationSearchResult response = new FederationSearchResult(resources);
-
-        return AuthorizationServiceHelper.addSecurityService(response, new HttpHeaders(),
-                HttpStatus.OK, (String) securityChecks.getBody());
-    }
-
-    public ResponseEntity listResources(HttpHeaders httpHeaders) {
-        log.trace("listResources request");
-
-        ResponseEntity securityChecks = AuthorizationServiceHelper.checkSecurityRequestAndCreateServiceResponse(
-                authorizationService, httpHeaders);
-        if (securityChecks.getStatusCode() != HttpStatus.OK)
-            return securityChecks;
-
-        List<FederatedResource> resources = resourceRepository.findAll();
+        List<FederatedResource> resources;
+        if(sort==null)
+            resources = resourceRepository.findAll(predicate);//all the federatedResources for the combined predicate.
+        else
+            resources = resourceRepository.findAll(predicate, sort);//Results sorted when specified
         FederationSearchResult response = new FederationSearchResult(resources);
 
         return AuthorizationServiceHelper.addSecurityService(response, new HttpHeaders(),

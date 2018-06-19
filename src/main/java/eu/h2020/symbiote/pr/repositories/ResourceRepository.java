@@ -22,11 +22,14 @@ public interface ResourceRepository extends MongoRepository<FederatedResource, S
 
     List<FederatedResource> findAllByCloudResource_InternalIdIn(Set<String> internalIds);
 
-    List<FederatedResource> deleteAllByAggregationIdIn(Set<String> ids);
+    List<FederatedResource> deleteAllByCloudResource_InternalIdIn(Set<String> internalIds);
 
-    List<FederatedResource> findAll(Predicate predicate, Sort sort);
+    List<FederatedResource> deleteAllByAggregationIdIn(Set<String> ids);
 
     List<FederatedResource> findAllByLocationCoordsIsWithin(Circle point);
 
-    List<FederatedResource> deleteAllByCloudResource_InternalIdIn(Set<String> internalIds);
-}
+    List<FederatedResource> findAll(Predicate predicate, Sort sort);
+
+    List<FederatedResource> findAll(Predicate predicate);
+
+    }

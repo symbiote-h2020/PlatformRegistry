@@ -77,12 +77,12 @@ public class RegistrationHandlerService {
             if (cloudResource.getFederationInfo() == null ||
                     cloudResource.getFederationInfo().getAggregationId() == null) {
 
-                // If federationInfo is null or the symbioteId == null that means we have a register operation
+                // If federationInfo is null or aggregationId is null that means we have a register operation
                 // So, we create the federationInfo
                 FederationInfoBean federationInfo = new FederationInfoBean();
                 federationInfo.setAggregationId(createNewResourceId());
 
-                // todo: Set also the symbioteId inside sharingInformation
+                //We update the sharingInformation in federationInfo
                 if (cloudResource.getFederationInfo() != null && cloudResource.getFederationInfo().getSharingInformation() != null)
                     federationInfo.setSharingInformation(cloudResource.getFederationInfo().getSharingInformation());
 
@@ -121,7 +121,6 @@ public class RegistrationHandlerService {
         if (resourcesToSave.size() > 0)
             rabbitTemplate.convertAndSend(subscriptionManagerExchange, smAddOrUpdateFederatedResourcesKey,
                     new ResourcesAddedOrUpdatedMessage(resourcesToSave));
-
 
         resourceRepository.save(resourcesToSave);
 
@@ -229,8 +228,6 @@ public class RegistrationHandlerService {
             rabbitTemplate.convertAndSend(subscriptionManagerExchange, smAddOrUpdateFederatedResourcesKey,
                     new ResourcesAddedOrUpdatedMessage(new ArrayList<>(resourcesToSave.values())));
 
-
-
         resourceRepository.save(new ArrayList<>(storedFederatedResources.values()));
 
         // We return the list of CloudResources from the storedFederatedResources
@@ -322,7 +319,6 @@ public class RegistrationHandlerService {
                     new HashSet<>() :
                     updatedCloudResource.getFederationInfo().getSharingInformation().keySet();
 
-
             // Find which federations were removed
             for (String id : oldFederations) {
                 if (!newFederations.contains(id))
@@ -366,7 +362,7 @@ public class RegistrationHandlerService {
         // This contains only the newly added federations
         FederatedResource federatedResource = cachedResources.get(internalId);
 
-        // If not found fetch it from the stored federated resources
+        // If not found, fetch it from the stored federated resources
         if (federatedResource == null) {
             // Here, we do a trick. Instead of cloning the federatedResource, we just serialize it and deserialize it.
             // So, every time we deserialize a new object is created. We did that to avoid the cumbersome
@@ -381,7 +377,6 @@ public class RegistrationHandlerService {
         federatedResource.clearPrivateInfo();
         return federatedResource;
     }
-
 
     private String serializeFederatedResource(FederatedResource federatedResource) {
         String string;

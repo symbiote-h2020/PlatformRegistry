@@ -137,7 +137,6 @@ public class SubscriptionManagerService {
 
         }
 
-
         resourceRepository.save(new ArrayList<>(storedFederatedResourcesMap.values()));
         resourceRepository.deleteAllByAggregationIdIn(unsharedResourcesIds);
 
