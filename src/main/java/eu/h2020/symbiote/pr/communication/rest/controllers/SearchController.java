@@ -94,7 +94,7 @@ public class SearchController {
                                                    @RequestParam(value="adaptive_trust", required = false) Double adaptiveTrust,
                                                    @RequestParam(value="sort", required = false) String sort
     ) {
-        log.trace("Request to /list_resources_in_predicate");
+        log.trace("Request to /search");
 
         BooleanBuilder builder=new BooleanBuilder();
         QFederatedResource federatedResource = QFederatedResource.federatedResource;
