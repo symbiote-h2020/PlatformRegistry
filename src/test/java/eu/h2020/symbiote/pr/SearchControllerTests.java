@@ -141,7 +141,7 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         String aggregationIds = String.join(",",ids);
         String predicate="?id="+aggregationIds;
 
-        mockMvc.perform(get("/pr/search/" + predicate))
+        mockMvc.perform(get("/pr/search" + predicate))
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(3)))
@@ -168,7 +168,7 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         String name = String.join(",",names);
         String predicate="?name="+name;
 
-        mockMvc.perform(get("/pr/search/" + predicate))
+        mockMvc.perform(get("/pr/search" + predicate))
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(2)))
@@ -194,7 +194,7 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         String description = String.join(",", descriptions);
         String predicate="?description="+description;
 
-        mockMvc.perform(get("/pr/search/" + predicate))
+        mockMvc.perform(get("/pr/search" + predicate))
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(1)))
@@ -221,7 +221,7 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         String fedIds = String.join(",",feds);
         String predicate="?federationId="+fedIds;
 
-        mockMvc.perform(get("/pr/search/" + predicate))
+        mockMvc.perform(get("/pr/search" + predicate))
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(1)))
@@ -246,7 +246,7 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         String observesProperty = String.join(",", properties);
         String predicate="?observes_property="+observesProperty;
 
-        mockMvc.perform(get("/pr/search/" + predicate))
+        mockMvc.perform(get("/pr/search" + predicate))
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(1)))
@@ -271,7 +271,7 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         String resourceType = federatedResourceList.get(0).getResourceType();//"StationarySensor";
         String predicate="?resource_type="+resourceType;
 
-        mockMvc.perform(get("/pr/search/" + predicate))
+        mockMvc.perform(get("/pr/search" + predicate))
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(1)))
@@ -298,7 +298,7 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         String locationName = String.join(",", locations);
         String predicate="?location_name="+locationName+"&sort=locatedAt.longitude desc;";
 
-        mockMvc.perform(get("/pr/search/" + predicate))
+        mockMvc.perform(get("/pr/search" + predicate))
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(2)))
@@ -332,7 +332,7 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
         String predicate="?location_lat="+locationLat
                 +"&location_long="+locationLong;
 
-        mockMvc.perform(get("/pr/search/" + predicate))
+        mockMvc.perform(get("/pr/search" + predicate))
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(1)))
@@ -367,7 +367,7 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
                 +"&location_name="+locationName
                 +"&sort=locatedAt.longitude desc";
 
-        mockMvc.perform(get("/pr/search/" + predicate))
+        mockMvc.perform(get("/pr/search" + predicate))
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(2)))
@@ -394,7 +394,7 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
 
         String predicate="?resource_trust=1.0&adaptive_trust=6.0";
 
-        mockMvc.perform(get("/pr/search/" + predicate))
+        mockMvc.perform(get("/pr/search" + predicate))
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(2
@@ -417,7 +417,7 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
 
         String predicate="?sort=aggregationId desc";//"";//
 
-        mockMvc.perform(get("/pr/search/" + predicate))
+        mockMvc.perform(get("/pr/search" + predicate))
                 .andExpect(status().isOk())
                 .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
                 .andExpect(jsonPath("$.resources", hasSize(3)))
@@ -428,9 +428,5 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
                         )));
 
     }
-
-
-
-
 }
 

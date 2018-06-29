@@ -77,7 +77,7 @@ public class SearchController {
      * @param httpHeaders request headers
      * @return ResponseEntity   query result as body or null along with appropriate error HTTP status code
      */
-    @GetMapping("/search/")
+    @GetMapping("/search")
     public ResponseEntity listResourcesInPredicate(@RequestHeader HttpHeaders httpHeaders,
                                                    @QuerydslPredicate(root = FederatedResource.class) Predicate p,
                                                    @RequestParam(value="name", required = false) List<String> resourceNames,
