@@ -93,13 +93,16 @@ public class RegistrationHandlerService {
                 cloudResource.setFederationInfo(federationInfo);
             }
 
+            String aggregationId = cloudResource.getFederationInfo().getAggregationId();
+
             // If barteringInfo == null, default it to false
-            for (ResourceSharingInformation sharingInformation :
-                    cloudResource.getFederationInfo().getSharingInformation().values()) {
-                if (sharingInformation.getBartering() == null)
-                    sharingInformation.setBartering(false);
-                if (sharingInformation.getSharingDate() == null)
-                    sharingInformation.setSharingDate(new Date());
+            for (Map.Entry<String, ResourceSharingInformation> entry :
+                    cloudResource.getFederationInfo().getSharingInformation().entrySet()) {
+                entry.getValue().setSymbioteId(aggregationId + '@' + entry.getKey());
+                if (entry.getValue().getBartering() == null)
+                    entry.getValue().setBartering(false);
+                if (entry.getValue().getSharingDate() == null)
+                    entry.getValue().setSharingDate(new Date());
             }
 
             //resourceTrust is not required to be updated here

@@ -54,6 +54,11 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         assertTrue(resource1.getCloudResource().getFederationInfo().getSharingInformation().get(federation1).getBartering());
         assertFalse(resource1.getCloudResource().getFederationInfo().getSharingInformation().get(federation2).getBartering());
         assertEquals("stationarySensor", resource1.getCloudResource().getResource().getName());
+        String aggregationId = resource1.getCloudResource().getFederationInfo().getAggregationId();
+        assertEquals(aggregationId + '@' + federation1,
+                resource1.getCloudResource().getFederationInfo().getSharingInformation().get(federation1).getSymbioteId());
+        assertEquals(aggregationId + '@' + federation2,
+                resource1.getCloudResource().getFederationInfo().getSharingInformation().get(federation2).getSymbioteId());
 
         FederatedResource resource2 = resourceRepository.findOne(actuatorId);
         assertTrue(resource2.getCloudResource().getResource() instanceof Actuator);
@@ -62,6 +67,9 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         assertEquals(1, resource2.getCloudResource().getFederationInfo().getSharingInformation().size());
         assertTrue(resource2.getCloudResource().getFederationInfo().getSharingInformation().get(federation1).getBartering());
         assertEquals("actuator", resource2.getCloudResource().getResource().getName());
+        aggregationId = resource2.getCloudResource().getFederationInfo().getAggregationId();
+        assertEquals(aggregationId + '@' + federation1,
+                resource2.getCloudResource().getFederationInfo().getSharingInformation().get(federation1).getSymbioteId());
 
         FederatedResource resource3 = resourceRepository.findOne(serviceId);
         assertTrue(resource3.getCloudResource().getResource() instanceof Service);
@@ -70,6 +78,9 @@ public class RegistrationHandlerListenerTests extends PlatformRegistryBaseTestCl
         assertEquals(1, resource3.getCloudResource().getFederationInfo().getSharingInformation().size());
         assertTrue(resource3.getCloudResource().getFederationInfo().getSharingInformation().get(federation1).getBartering());
         assertEquals("service", resource3.getCloudResource().getResource().getName());
+        aggregationId = resource3.getCloudResource().getFederationInfo().getAggregationId();
+        assertEquals(aggregationId + '@' + federation1,
+                resource3.getCloudResource().getFederationInfo().getSharingInformation().get(federation1).getSymbioteId());
 
         // Check what dummySubscriptionManagerListener received
         while (dummySubscriptionManagerListener.getResourcesAddedOrUpdatedMessages().size() == 0)
