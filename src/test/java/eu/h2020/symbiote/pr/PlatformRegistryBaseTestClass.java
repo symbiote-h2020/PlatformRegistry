@@ -258,6 +258,8 @@ public abstract class PlatformRegistryBaseTestClass {
         Service service = new Service();
         service.setName("service");
         service.setInterworkingServiceURL("https://service.com");
+        List<String> descriptionList=Arrays.asList("@type=Beacon","@beacon.id=f7826da6-4fa2-4e98-8024-bc5b71e0893e","@beacon.major=44933","@beacon.minor=46799","@beacon.tx=0x50");
+        service.setDescription(descriptionList);
         resources.add(service);
 
         return resources;

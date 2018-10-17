@@ -16,6 +16,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -93,7 +97,7 @@ public class SearchController {
                                                    @RequestParam(value="resource_trust", required = false) Double resourceTrust,
                                                    @RequestParam(value="adaptive_trust", required = false) Double adaptiveTrust,
                                                    @RequestParam(value="sort", required = false) String sort
-    ) {
+    ) throws UnsupportedEncodingException {
         log.trace("Request to /search");
 
         BooleanBuilder builder=new BooleanBuilder();
@@ -108,32 +112,41 @@ public class SearchController {
 
         if(resourceDescriptions!=null) //find federatedResources where description (list of strings) contains all strings specified. "and" is required instead of "andAnyOf"
             for(String rD: resourceDescriptions)
-                builder.and(federatedResource.cloudResource.resource.description.any().eq(rD));
+                builder.and(federatedResource.cloudResource.resource.description.any().eq(URLDecoder.decode(rD,"UTF-8")));
 
         if(observes_property!=null) //find federatedResources where Observes_property (list of strings) contains all strings specified.
             for(String oP: observes_property) {
                 QSensor qsensor = federatedResource.cloudResource.resource.as(QSensor.class);
-                builder.and(federatedResource.cloudResource.resource.as(QSensor.class).observesProperty.any().eq(oP));
+                builder.and(federatedResource.cloudResource.resource.as(QSensor.class).observesProperty.any().eq(URLDecoder.decode(oP,"UTF-8")));
             }
 
-        if(aggregationIds!=null) //find federatedResources with symbioteid in the specified list
-            builder.and(federatedResource.aggregationId.in(aggregationIds));
+        if(aggregationIds!=null) { //find federatedResources with symbioteid in the specified list
+            List<String> aggregationIdsDecoded=new ArrayList<>();
+            for(String name:aggregationIds)
+                aggregationIdsDecoded.add(URLDecoder.decode(name,"UTF-8"));
+            builder.and(federatedResource.aggregationId.in(aggregationIdsDecoded));
+        }
 
         if(resourceFederations!=null) {//if federatedResource belongs to any of the federations specified
             BooleanBuilder predicateOnFedIds = new BooleanBuilder();
             for (String fedId : resourceFederations)
-                predicateOnFedIds.or(federatedResource.federatedResourceInfoMap.containsKey(fedId));
+                predicateOnFedIds.or(federatedResource.federatedResourceInfoMap.containsKey(URLDecoder.decode(fedId,"UTF-8")));
             builder.and(predicateOnFedIds);
         }
 
         //TODO: fix querydsl problem with instanceOf use to remove the added resourceType field
         if(resourceType!=null) {//find federatedResources where resource is instanceof resourceType.  federatedResource's resourceType contains the simple name of resource's class.
-            builder.and(federatedResource.resourceType.eq(resourceType));
+            builder.and(federatedResource.resourceType.eq(URLDecoder.decode(resourceType,"UTF-8")));
         }
 
         //TODO: fix querydsl deep path initialization problem to remove the added location specific fields if possible
         if(locationName!=null)//find federatedResources locatedAt specified location
-            builder.and(federatedResource.locatedAt.name.in(locationName));
+        {
+            List<String> locationNameDecoded=new ArrayList<>();
+            for(String name:locationName)
+                locationNameDecoded.add(URLDecoder.decode(name,"UTF-8"));
+            builder.and(federatedResource.locatedAt.name.in(locationNameDecoded));
+        }
 
         if (locationLong!= null && maxDistance==null) //find federatedResources with the specified longitude. Resource of type Device with location of type QWGS84Location, null otherwise.
             builder.and(federatedResource.locationCoords.get(0).eq(locationLong));

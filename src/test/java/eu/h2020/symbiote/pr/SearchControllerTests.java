@@ -6,6 +6,7 @@ import eu.h2020.symbiote.security.commons.SecurityConstants;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import static org.hamcrest.Matchers.*;
@@ -203,6 +204,31 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
                         )));
     }
 
+    @Test
+    public void listResourcesInPredicateByDescriptionSpecialCharsSuccessfulTest() throws Exception {
+        List<FederatedResource> federatedResourceList = createTestFederatedResources(platformId);
+        resourceRepository.save(federatedResourceList);
+
+        // Sleep to make sure that the repo has been updated before querying
+        TimeUnit.MILLISECONDS.sleep(500);
+
+        doReturn(new ResponseEntity<>(serviceResponse, HttpStatus.OK))
+                .when(authorizationService).generateServiceResponse();
+        doReturn(new ResponseEntity<>(HttpStatus.OK))
+                .when(authorizationService).checkListResourcesRequest(any(), any());
+
+        List<String> descriptions=federatedResourceList.get(2).getCloudResource().getResource().getDescription();//Collections.singletonList("sensor1Description");
+        String description = URLEncoder.encode("@type=Beacon", "UTF-8");//String.join(",", descriptions);
+        String predicate="?description="+description;
+
+        mockMvc.perform(get("/pr/search" + predicate))
+                 .andExpect(status().isOk())
+                .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
+                .andExpect(jsonPath("$.resources", hasSize(1)))
+                .andExpect(jsonPath("$.resources[*].cloudResource.resource.description",
+                       contains(descriptions)));
+
+    }
 
     @Test
     public void listResourcesInPredicateByFedIdsSuccessfulTest() throws Exception {
