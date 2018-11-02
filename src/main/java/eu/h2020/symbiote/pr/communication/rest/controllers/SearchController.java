@@ -4,7 +4,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Predicate;
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
 import eu.h2020.symbiote.cloud.model.internal.QFederatedResource;
-import eu.h2020.symbiote.model.cim.*;
+import eu.h2020.symbiote.model.cim.QSensor;
 import eu.h2020.symbiote.pr.services.SearchService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -65,21 +65,24 @@ public class SearchController {
      * filtering and sorting the available resources according to the
      * specified request parameters
      *
-     * @param name             a list with the resource names
-     * @param description       the resource description
-     * @param id                the id for identifying the resource in the symbIoTe federation (aggregationId)
-     * @param federationId      the list of federation ids
-     * @param observed_property property observed by resource (sensor); can indicate more than one
-     *                          observed property
-     * @param resource_type     type of queried resource e.g. stationarySensor
-     * @param location_name     name of resource location; can be a set of different locations
-     * @param location_lat      latitude of resource location; it concerns WGS84 locations for devices
-     * @param location_long     longitude of resource location; it concerns WGS84 locations for devices
-     * @param max_distance      maximal distance from specified resource latitude and longitude (in meters);
-     *                          the radius used for geospatial queries
-     * @param sort              the field to be used for sorting the resources
-     * @param httpHeaders request headers
-     * @return ResponseEntity   query result as body or null along with appropriate error HTTP status code
+     * @param resourceNames             a list with the resource names
+     * @param resourceDescriptions      a list of resource descriptions
+     * @param aggregationIds            a list of ids for identifying the resource in the symbIoTe federation (aggregationId)
+     * @param resourceFederations       a list of federation ids
+     * @param observes_property         a list of propertie observed by resource (sensor)
+     * @param resourceType              the type of queried resource e.g. stationarySensor
+     * @param locationName              a list of resource locations
+     * @param locationLat               the latitude of resource location; it concerns WGS84 locations for devices
+     * @param locationLong              the longitude of resource location; it concerns WGS84 locations for devices
+     * @param maxDistance               the maximum distance from specified resource latitude and longitude (in meters);
+     *                                  the radius used for geospatial queries
+     * @param sort                      the field to be used for sorting the resources
+     * @param httpHeaders               request headers
+     * @param resourceTrust             the trust value of the resources shared by the platform
+     * @param adaptiveTrust             the trust value for the resources shared by other platforms in the federation
+     * @param customQuery               a custom Mongo query; if set it overwrites everything else. It can be used for
+     *                                  searching for extension fields
+     * @return ResponseEntity           query result as body or null along with appropriate error HTTP status code
      */
     @GetMapping("/search")
     public ResponseEntity listResourcesInPredicate(@RequestHeader HttpHeaders httpHeaders,
@@ -90,18 +93,24 @@ public class SearchController {
                                                    @RequestParam(value="federationId", required = false) List<String> resourceFederations,
                                                    @RequestParam(value="observes_property", required = false) List<String> observes_property,
                                                    @RequestParam(value="resource_type", required = false) String resourceType,
-                                                   @RequestParam(value="location_name", required = false) List<String> locationName,//String locationName,
+                                                   @RequestParam(value="location_name", required = false) List<String> locationName,
                                                    @RequestParam(value="location_lat", required = false) Double locationLat,
                                                    @RequestParam(value="location_long", required = false) Double locationLong,
                                                    @RequestParam(value = "max_distance", required = false) Double maxDistance,
                                                    @RequestParam(value="resource_trust", required = false) Double resourceTrust,
                                                    @RequestParam(value="adaptive_trust", required = false) Double adaptiveTrust,
-                                                   @RequestParam(value="sort", required = false) String sort
+                                                   @RequestParam(value="sort", required = false) String sort,
+                                                   @RequestParam(value="customQuery", required = false) String customQuery
     ) throws UnsupportedEncodingException {
         log.trace("Request to /search");
 
         BooleanBuilder builder=new BooleanBuilder();
         QFederatedResource federatedResource = QFederatedResource.federatedResource;
+
+        if (customQuery != null) {
+            customQuery = URLDecoder.decode(customQuery,"UTF-8");
+            return searchService.searchByCustomPredicate(httpHeaders, customQuery);
+        }
 
         if(p!=null) { //find federatedResources with the specified fields in the predicate
             builder.and(p);

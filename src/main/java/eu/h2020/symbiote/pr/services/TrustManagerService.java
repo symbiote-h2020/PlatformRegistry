@@ -1,9 +1,6 @@
 package eu.h2020.symbiote.pr.services;
 
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
-import eu.h2020.symbiote.cloud.model.internal.ResourceSharingInformation;
-import eu.h2020.symbiote.cloud.model.internal.ResourcesAddedOrUpdatedMessage;
-import eu.h2020.symbiote.cloud.model.internal.ResourcesDeletedMessage;
 import eu.h2020.symbiote.cloud.trust.model.TrustEntry;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;

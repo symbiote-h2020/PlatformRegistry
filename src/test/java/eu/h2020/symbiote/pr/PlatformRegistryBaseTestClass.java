@@ -2,12 +2,14 @@ package eu.h2020.symbiote.pr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
-import eu.h2020.symbiote.cloud.model.internal.*;
+import eu.h2020.symbiote.cloud.model.internal.CloudResource;
+import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
+import eu.h2020.symbiote.cloud.model.internal.FederationInfoBean;
+import eu.h2020.symbiote.cloud.model.internal.ResourceSharingInformation;
 import eu.h2020.symbiote.model.cim.*;
 import eu.h2020.symbiote.pr.dummyListeners.DummySubscriptionManagerListener;
 import eu.h2020.symbiote.pr.repositories.ResourceRepository;
 import eu.h2020.symbiote.pr.services.AuthorizationService;
-import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.After;
@@ -22,11 +24,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
-import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Vasileios Glykantzis (ICOM)

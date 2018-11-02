@@ -6,9 +6,12 @@ import eu.h2020.symbiote.cloud.trust.model.TrustEntry;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
-import java.util.*;
+
+import java.util.List;
 import java.util.concurrent.TimeUnit;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
 /**

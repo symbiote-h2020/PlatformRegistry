@@ -2,7 +2,6 @@ package eu.h2020.symbiote.pr;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.List;
 

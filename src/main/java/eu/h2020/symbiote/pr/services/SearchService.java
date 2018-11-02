@@ -1,5 +1,6 @@
 package eu.h2020.symbiote.pr.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Predicate;
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
@@ -12,12 +13,15 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.geo.Circle;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.BasicQuery;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -32,11 +36,16 @@ public class SearchService {
 
     private ResourceRepository resourceRepository;
     private AuthorizationService authorizationService;
+    private MongoTemplate mongoTemplate;
+    private ObjectMapper om = new ObjectMapper();
 
     @Autowired
-    public SearchService(ResourceRepository resourceRepository, AuthorizationService authorizationService) {
+    public SearchService(ResourceRepository resourceRepository,
+                         AuthorizationService authorizationService,
+                         MongoTemplate mongoTemplate) {
         this.resourceRepository = resourceRepository;
         this.authorizationService = authorizationService;
+        this.mongoTemplate = mongoTemplate;
     }
 
     public ResponseEntity listByPredicate(HttpHeaders httpHeaders, Predicate p, Sort sort, Circle near) {
@@ -70,4 +79,23 @@ public class SearchService {
                 HttpStatus.OK, (String) securityChecks.getBody());
     }
 
+    public ResponseEntity searchByCustomPredicate(HttpHeaders httpHeaders, String customQuery) {
+        log.trace("searchByCustomPredicate request: " + customQuery);
+
+        ResponseEntity securityChecks = AuthorizationServiceHelper.checkSecurityRequestAndCreateServiceResponse(
+                authorizationService, httpHeaders);
+        if (securityChecks.getStatusCode() != HttpStatus.OK)
+            return securityChecks;
+
+        BasicQuery query = new BasicQuery(customQuery);
+        List<FederatedResource> resources = mongoTemplate.find(query, FederatedResource.class);
+        FederationSearchResult response = new FederationSearchResult(resources);
+
+
+        return AuthorizationServiceHelper.addSecurityService(
+                response,
+                new HttpHeaders(),
+                HttpStatus.OK,
+                (String) securityChecks.getBody());
+    }
 }

@@ -1,7 +1,5 @@
 package eu.h2020.symbiote.pr.communication.rabbit;
 
-import eu.h2020.symbiote.cloud.model.internal.ResourcesAddedOrUpdatedMessage;
-import eu.h2020.symbiote.cloud.model.internal.ResourcesDeletedMessage;
 import eu.h2020.symbiote.cloud.trust.model.TrustEntry;
 import eu.h2020.symbiote.pr.services.TrustManagerService;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
@@ -13,8 +11,6 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.Set;
 
 /**
  * This class is used as a simple listener.

@@ -1,14 +1,19 @@
 package eu.h2020.symbiote.pr;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.h2020.symbiote.cloud.model.internal.FederatedResource;
-import eu.h2020.symbiote.model.cim.*;
+import eu.h2020.symbiote.model.cim.WGS84Location;
 import eu.h2020.symbiote.security.commons.SecurityConstants;
 import org.junit.Test;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
 import java.net.URLEncoder;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -452,6 +457,36 @@ public class SearchControllerTests extends PlatformRegistryBaseTestClass {
                 .andExpect(jsonPath("$.resources[1].aggregationId",
                         greaterThan("$.resources[2].aggregationId"
                         )));
+
+    }
+
+    @Test
+    public void searchWithPredicate() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        List<FederatedResource> federatedResourceList = createTestFederatedResources(platformId);
+        FederatedResource federatedResource = federatedResourceList.get(0);
+        String jsonString = "{\"k1\":\"v1\",\"k2\":[\"v2.1\", \"v2.2\"]}";
+        federatedResource.getCloudResource().getResource().setExtensionFields(mapper.readTree(jsonString));
+        resourceRepository.save(federatedResourceList);
+
+        // Sleep to make sure that the repo has been updated before querying
+        TimeUnit.MILLISECONDS.sleep(500);
+
+        doReturn(new ResponseEntity<>(serviceResponse, HttpStatus.OK))
+                .when(authorizationService).generateServiceResponse();
+        doReturn(new ResponseEntity<>(HttpStatus.OK))
+                .when(authorizationService).checkListResourcesRequest(any(), any());
+
+        Query query = new Query();
+        query.addCriteria(Criteria.where("cloudResource.resource.extensionFields.k2").all("v2.2"));
+        String customQuery = URLEncoder.encode(query.getQueryObject().toString(), "UTF-8");
+        customQuery = "?customQuery=" + customQuery;
+
+        mockMvc.perform(get("/pr/search" + customQuery))
+                .andExpect(status().isOk())
+                .andExpect(header().string(SecurityConstants.SECURITY_RESPONSE_HEADER, serviceResponse))
+                .andExpect(jsonPath("$.resources", hasSize(1)))
+                .andExpect(jsonPath("$.resources[0].resourceType", equalTo("StationarySensor")));
 
     }
 }
