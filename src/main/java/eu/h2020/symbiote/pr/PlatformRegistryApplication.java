@@ -44,6 +44,7 @@ public class PlatformRegistryApplication {
         factory.setConcurrentConsumers(3);
         factory.setMaxConcurrentConsumers(10);
         factory.setMessageConverter(jackson2JsonMessageConverter());
+        factory.setDefaultRequeueRejected(false);
         return factory;
     }
 

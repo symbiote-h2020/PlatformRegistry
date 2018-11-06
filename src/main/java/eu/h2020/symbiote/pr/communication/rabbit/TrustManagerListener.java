@@ -1,20 +1,13 @@
 package eu.h2020.symbiote.pr.communication.rabbit;
 
-import eu.h2020.symbiote.cloud.model.internal.ResourcesAddedOrUpdatedMessage;
-import eu.h2020.symbiote.cloud.model.internal.ResourcesDeletedMessage;
 import eu.h2020.symbiote.cloud.trust.model.TrustEntry;
 import eu.h2020.symbiote.pr.services.TrustManagerService;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.amqp.rabbit.annotation.Exchange;
-import org.springframework.amqp.rabbit.annotation.Queue;
-import org.springframework.amqp.rabbit.annotation.QueueBinding;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.Set;
 
 /**
  * This class is used as a simple listener.
@@ -35,7 +28,7 @@ public class TrustManagerListener {
 
     /**
      * Spring AMQP Listener for listening to new FederationResources updates from Trust Manager.
-     * @param resourcesTrustUpdated message received from Trust Manager
+     * @param resourceTrustUpdated message received from Trust Manager
      */
     @RabbitListener(
             bindings = @QueueBinding(
@@ -43,7 +36,12 @@ public class TrustManagerListener {
                             value = "${rabbit.queueName.trust.updateAdaptiveResourceTrust}",
                             durable = "${rabbit.exchange.trust.durable}",
                             autoDelete = "${rabbit.exchange.trust.autodelete}",
-                            exclusive = "false"//
+                            exclusive = "false",
+                            arguments= {
+                                    @Argument(
+                                            name = "x-message-ttl",
+                                            value="${spring.rabbitmq.template.reply-timeout}",
+                                            type="java.lang.Integer")}
                             ),
                     exchange = @Exchange(
                             value = "${rabbit.exchange.trust}",
