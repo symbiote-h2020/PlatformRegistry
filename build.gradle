@@ -1,8 +1,8 @@
 // initial extensions to gradle
 buildscript {
     ext {
-        springBootVersion = '1.5.14.RELEASE'
-        springCloudVersion = 'Dalston.SR5'
+        springBootVersion = '1.5.18.RELEASE'
+        springCloudVersion = 'Edgware.SR5'
         querydslVersion = '4.1.4'
     }
     repositories {
@@ -88,7 +88,7 @@ dependencies {
     */
 
 
-    compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.27+') { changing = true }//5.14+//trust
+    compile('com.github.symbiote-h2020:SymbIoTeLibraries:5.37+') { changing = true }
 
     // Spring
     compile('org.springframework.cloud:spring-cloud-starter-config')
